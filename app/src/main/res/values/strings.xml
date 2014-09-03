@@ -4,5 +4,8 @@
     <string name="app_name">Hermes</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="action_get_keypair">Get KeyPair</string>
+    <string name="action_delete_keypair">Delete KeyPair</string>
+    <string name="action_test">Test</string>
 
 </resources>
