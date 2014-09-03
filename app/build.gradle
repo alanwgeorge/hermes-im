@@ -5,7 +5,7 @@ android {
     buildToolsVersion "20.0.0"
 
     defaultConfig {
-        applicationId "com.alangeorge.android.hermes.hermes"
+        applicationId "com.alangeorge.android.hermes"
         minSdkVersion 16
         targetSdkVersion 20
         versionCode 1
@@ -21,4 +21,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.google.zxing:core:3.0.0'
+    compile 'com.android.support:support-v4:20.0.0'
+    compile 'com.google.android.gms:play-services:5.0.89'
 }
