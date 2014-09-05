@@ -10,14 +10,19 @@ import android.security.KeyPairGeneratorSpec;
 import android.util.Log;
 
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.Provider;
 import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
 import java.security.cert.Certificate;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -26,6 +31,25 @@ public class App extends Application {
     private static final String PROPERTY_GCM_REG_ID = "gcm_registration_id";
     private static final String PROPERTY_APP_VERSION = "app_version";
     public static final String KEYPAIR_ALIAS = "keypair_alias";
+    public static final String DEFAULT_AES_SECURITY_PROVIDER = "BC";
+    public static final String DEFAULT_AES_CIPHER = "AES";
+    public static final String DEFAULT_RSA_SECURITY_PROVIDER = "AndroidOpenSSL";
+    public static final String DEFAULT_RSA_CIPHER = "RSA/ECB/PKCS1Padding";
+    public static final Charset DEFAULT_CHARACTER_SET = Charset.forName("UTF-8");
+
+    public static final SecureRandom secureRandom;
+
+    static {
+        SecureRandom temp = null;
+        try {
+            temp = SecureRandom.getInstance("SHA1PRNG", DEFAULT_RSA_SECURITY_PROVIDER);
+        } catch (Exception e) {
+            Log.e(TAG, "Unable to initialize SecureRandom", e);
+            throw new IllegalArgumentException("Unable to initialize SecureRandom", e);
+        } finally {
+            secureRandom = temp;
+        }
+    }
 
     public static Context context;
 
@@ -37,6 +61,17 @@ public class App extends Application {
         Log.d(TAG, "onCreate()");
         super.onCreate();
         context = getApplicationContext();
+
+        if (BuildConfig.DEBUG) {
+            Provider[] providers = Security.getProviders();
+            for (Provider provider : providers) {
+                Log.i("CRYPTO", "provider:" + provider.getName());
+                Set<Provider.Service> services = provider.getServices();
+                for (Provider.Service service : services) {
+                    Log.i("CRYPTO", "  algorithm: " + service.getAlgorithm());
+                }
+            }
+        }
     }
 
     public static String getGcmRegistrationId() {
