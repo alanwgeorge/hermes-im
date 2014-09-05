@@ -9,17 +9,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.alangeorge.android.hermes.model.Message;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import java.io.IOException;
 import java.security.KeyPair;
-import java.security.SecureRandom;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
+
+import static com.alangeorge.android.hermes.App.DEFAULT_AES_CIPHER;
+import static com.alangeorge.android.hermes.App.DEFAULT_AES_SECURITY_PROVIDER;
+import static com.alangeorge.android.hermes.App.DEFAULT_CHARACTER_SET;
+import static com.alangeorge.android.hermes.App.DEFAULT_RSA_CIPHER;
+import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
 
 public class MainActivity extends FragmentActivity {
     private static final String TAG = "MainActivity";
@@ -27,7 +33,6 @@ public class MainActivity extends FragmentActivity {
     private static final String SENDER_ID = "323620638301";
 
     private GoogleCloudMessaging gcm;
-//    private String gcmRegistrationId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,39 +81,81 @@ public class MainActivity extends FragmentActivity {
             case R.id.action_test:
                 keyPair = App.getKeyPair();
 
-                SecretKeySpec secretKeySpec = generateSymmetricKey();
+                Message message = new Message();
+                Message.Body body = new Message.Body();
 
-                String encodedSecretKeySpec = Base64.encodeToString(secretKeySpec.getEncoded(), Base64.NO_PADDING);
+                body.setGcmRegistrationId(App.getGcmRegistrationId());
+                body.setPublicKey(Base64.encodeToString(keyPair.getPublic().getEncoded(), Base64.NO_WRAP));
 
-//                String theTestText = "RSA stands for Ron Rivest, Adi Shamir and Leonard Adleman. They developed the algorithm by using the large integer factorization technique in 1977. It has since become so popular that we almost depend on similar technologies used in everyday life, such as banking, messaging, etc. As we briefly mentioned before, this type of algorithm uses a pair of keys used for encryption and decryption respectively.";
-//                String theTestText = "RSA stands for Ron Rivest, Adi Shamir and Leonard Adleman.";
+                SecretKeySpec symmetricKey = generateSymmetricKey();
 
-                byte[] encodedBytes;
+                String theTestTextIn = "RSA stands for Ron Rivest, Adi Shamir and Leonard Adleman. They developed the algorithm by using the large integer factorization technique in 1977. It has since become so popular that we almost depend on similar technologies used in everyday life, such as banking, messaging, etc. As we briefly mentioned before, this type of algorithm uses a pair of keys used for encryption and decryption respectively.";
+
+                // encode the message with symmetric key
+                byte[] theTestTextInEncodedBytes;
                 try {
-                    Cipher c = Cipher.getInstance("RSA/ECB/PKCS1Padding", "AndroidOpenSSL");
-                    c.init(Cipher.ENCRYPT_MODE, keyPair.getPrivate());
-                    encodedBytes = c.doFinal(encodedSecretKeySpec.getBytes());
+                    Cipher cipher = Cipher.getInstance(DEFAULT_AES_CIPHER, DEFAULT_AES_SECURITY_PROVIDER);
+                    cipher.init(Cipher.ENCRYPT_MODE, symmetricKey);
+                    theTestTextInEncodedBytes = cipher.doFinal(theTestTextIn.getBytes(DEFAULT_CHARACTER_SET));
+                } catch (Exception e) {
+                    Log.e(TAG, "AES encryption error", e);
+                    return true;
+                }
+
+                body.setMessage(Base64.encodeToString(theTestTextInEncodedBytes, Base64.NO_WRAP));
+
+                // encode symmetricKey with receivers public key
+                byte[] symmetricKeyEncodedBytes;
+                try {
+                    Cipher cipher = Cipher.getInstance(DEFAULT_RSA_CIPHER, DEFAULT_RSA_SECURITY_PROVIDER);
+                    cipher.init(Cipher.ENCRYPT_MODE, keyPair.getPublic());
+                    symmetricKeyEncodedBytes = cipher.doFinal(symmetricKey.getEncoded());
                 } catch (Exception e) {
                     Log.e(TAG, "RSA encryption error", e);
                     return true;
                 }
 
-                byte[] decodedBytes;
+                body.setMessageKey(Base64.encodeToString(symmetricKeyEncodedBytes, Base64.NO_PADDING));
+                message.setBody(body);
+                message.sign(keyPair.getPrivate());
+
+                String messageJson = message.toJson();
+                Log.d(TAG, "message json: " + messageJson);
+                Log.d(TAG, "message json length: " + messageJson.length());
+
+                Message receivedMessage = new Message(messageJson);
+
+                Log.d(TAG, "verify = " + receivedMessage.verify(keyPair.getPublic()));
+
+                // decode the symmetricKey using receivers private key
+                byte[] symmetricKeyDecodedBytes;
                 try {
-                    Cipher c = Cipher.getInstance("RSA/ECB/PKCS1Padding", "AndroidOpenSSL");
-                    c.init(Cipher.DECRYPT_MODE, keyPair.getPublic());
-                    decodedBytes = c.doFinal(encodedBytes);
+                    Cipher cipher = Cipher.getInstance(DEFAULT_RSA_CIPHER, DEFAULT_RSA_SECURITY_PROVIDER);
+                    cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate());
+                    symmetricKeyDecodedBytes = cipher.doFinal(Base64.decode(receivedMessage.getBody().getMessageKey(), Base64.NO_WRAP));
                 } catch (Exception e) {
                     Log.e(TAG, "RSA decryption error", e);
                     return true;
                 }
 
-                assert decodedBytes != null;
-                String result = new String(decodedBytes);
+                // turn our decrypted bytes into a key
+                SecretKeySpec symmetricKeyFromMessage = new SecretKeySpec(symmetricKeyDecodedBytes, "AES");
 
-                assert result.endsWith(encodedSecretKeySpec);
+                // decrypt our message with our decrypted symmetric key
+                byte[] theTestTextInDecodedBytes;
+                try {
+                    Cipher cipher = Cipher.getInstance(DEFAULT_AES_CIPHER, DEFAULT_AES_SECURITY_PROVIDER);
+                    cipher.init(Cipher.DECRYPT_MODE, symmetricKeyFromMessage);
+                    theTestTextInDecodedBytes = cipher.doFinal(Base64.decode(receivedMessage.getBody().getMessage(), Base64.NO_WRAP));
+                } catch (Exception e) {
+                    Log.e(TAG, "AES decryption error", e);
+                    return true;
+                }
 
-                Toast.makeText(App.context, result, Toast.LENGTH_LONG).show();
+                // display the message
+                String receivedMessageText = new String(theTestTextInDecodedBytes, DEFAULT_CHARACTER_SET);
+                Log.d(TAG, "Message:" + receivedMessageText);
+                Toast.makeText(App.context, "Message:" + receivedMessageText, Toast.LENGTH_LONG).show();
 
                 return true;
             default:
@@ -116,11 +163,6 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    /**
-     * Check the device to make sure it has the Google Play Services APK. If
-     * it doesn't, display a dialog that allows users to download the APK from
-     * the Google Play Store or enable it in the device's system settings.
-     */
     private boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
         if (resultCode != ConnectionResult.SUCCESS) {
@@ -157,7 +199,7 @@ public class MainActivity extends FragmentActivity {
                     // so it can use GCM/HTTP or CCS to send messages to your app.
                     // The request to your server should be authenticated if your app
                     // is using accounts.
-                    sendRegistrationIdToBackend();
+                    sendGcmRegistrationIdToBackend();
 
                     // For this demo: we don't need to send it because the device
                     // will send upstream messages to a server that echo back the
@@ -182,22 +224,15 @@ public class MainActivity extends FragmentActivity {
         }.execute(null, null, null);
     }
 
-    /**
-     * Sends the registration ID to your server over HTTP, so it can use GCM/HTTP or CCS to send
-     * messages to your app. Not needed for this demo since the device sends upstream messages
-     * to a server that echoes back the message using the 'from' address in the message.
-     */
-    private void sendRegistrationIdToBackend() {
-        // Your implementation here.
+    private void sendGcmRegistrationIdToBackend() {
+        // No Op for now
     }
 
     private SecretKeySpec generateSymmetricKey() {
         SecretKeySpec secretKeySpec = null;
         try {
-            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            secureRandom.setSeed("foobar".getBytes());
             KeyGenerator kg = KeyGenerator.getInstance("AES");
-            kg.init(128, secureRandom);
+            kg.init(256, App.secureRandom);
             secretKeySpec = new SecretKeySpec((kg.generateKey()).getEncoded(), "AES");
         } catch (Exception e) {
             Log.e(TAG, "AES secret key spec error", e);
