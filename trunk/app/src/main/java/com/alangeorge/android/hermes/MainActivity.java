@@ -2,11 +2,15 @@ package com.alangeorge.android.hermes;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Base64;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.alangeorge.android.hermes.model.Message;
@@ -33,6 +37,7 @@ public class MainActivity extends FragmentActivity {
     private static final String SENDER_ID = "323620638301";
 
     private GoogleCloudMessaging gcm;
+    private SignOnFragment signOnFragment = new SignOnFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +45,7 @@ public class MainActivity extends FragmentActivity {
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new SignOnFragment())
+                    .add(R.id.container, signOnFragment)
                     .commit();
         }
 
@@ -70,6 +75,11 @@ public class MainActivity extends FragmentActivity {
         KeyPair keyPair;
 
         switch (id) {
+            case R.id.action_sign_off:
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.container, signOnFragment)
+                        .commit();
+                return true;
             case R.id.action_get_keypair:
                 keyPair = App.getKeyPair();
                 byte[] publicKey = keyPair.getPublic().getEncoded();
@@ -163,6 +173,14 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    public void signOn(View view) {
+        signOnFragment.signOn(view);
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, new PlaceholderFragment())
+                .commit();
+    }
+
     private boolean checkPlayServices() {
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
         if (resultCode != ConnectionResult.SUCCESS) {
@@ -239,5 +257,20 @@ public class MainActivity extends FragmentActivity {
         }
 
         return secretKeySpec;
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            @SuppressWarnings("UnnecessaryLocalVariable") View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            return rootView;
+        }
     }
 }
