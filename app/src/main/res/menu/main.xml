@@ -5,6 +5,10 @@
         <!--android:title="@string/action_settings"-->
         <!--android:orderInCategory="100"-->
         <!--android:showAsAction="never" />-->
+    <item android:id="@+id/action_sign_off"
+          android:title="@string/action_sign_off"
+          android:orderInCategory="100"
+          android:showAsAction="never" />
     <item android:id="@+id/action_get_keypair"
           android:title="@string/action_get_keypair"
           android:orderInCategory="100"

@@ -7,5 +7,8 @@
     <string name="action_get_keypair">Get KeyPair</string>
     <string name="action_delete_keypair">Delete KeyPair</string>
     <string name="action_test">Test</string>
+    <string name="signon_input_hint">Password</string>
+    <string name="signon_btn_label">Sign On</string>
+    <string name="action_sign_off">Sign Off</string>
 
 </resources>

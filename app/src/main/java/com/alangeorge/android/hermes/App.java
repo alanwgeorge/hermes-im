@@ -166,7 +166,7 @@ public class App extends Application {
                     .setEndDate(end)
                     .setSerialNumber(BigInteger.valueOf(1))
                     .setSubject(new X500Principal("CN=test1"))
-                    .setEncryptionRequired()
+//                    .setEncryptionRequired()
                     .setKeySize(2048)
                     .build());
 
