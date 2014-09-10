@@ -174,11 +174,13 @@ public class MainActivity extends FragmentActivity {
     }
 
     public void signOn(View view) {
-        signOnFragment.signOn(view);
-
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, new PlaceholderFragment())
-                .commit();
+        if (signOnFragment.signOn(view)) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.container, new ContactFragment())
+                    .commit();
+        } else {
+            Toast.makeText(App.context, "Sign On Failed", Toast.LENGTH_LONG).show();
+        }
     }
 
     private boolean checkPlayServices() {
