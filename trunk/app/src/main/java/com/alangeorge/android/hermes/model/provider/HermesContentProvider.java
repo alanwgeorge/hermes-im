@@ -1,0 +1,128 @@
+package com.alangeorge.android.hermes.model.provider;
+
+import android.content.ContentProvider;
+import android.content.ContentValues;
+import android.content.UriMatcher;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
+import android.net.Uri;
+import android.util.Log;
+
+import com.alangeorge.android.hermes.model.dao.DBHelper;
+
+import java.util.Arrays;
+import java.util.HashSet;
+
+import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_ID;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_CONTACT;
+
+public class HermesContentProvider extends ContentProvider {
+    private static final String TAG = "HermesContentProvider";
+
+    // used for the UriMatcher
+    private static final int CONTACTS = 10;
+    private static final int CONTACT_ID = 20;
+
+    private static final String CONTACTS_PATH = "contacts";
+
+    public static final String AUTHORITY = "com.alangeorge.android.hermes.contentprovider";
+    public static final Uri CONTACTS_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH);
+
+    private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    static {
+        sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH, CONTACTS);
+        sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH + "/#", CONTACT_ID);
+    }
+
+    private DBHelper dbHelper;
+
+    public HermesContentProvider() {
+    }
+
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        // Implement this to handle requests to delete one or more rows.
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public String getType(Uri uri) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        int uriType = sURIMatcher.match(uri);
+        SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
+        Uri result;
+
+        long id;
+
+        switch (uriType) {
+            case CONTACTS:
+                id = sqlDB.insert(TABLE_CONTACT, null, values);
+                getContext().getContentResolver().notifyChange(CONTACTS_CONTENT_URI, null);
+                result = Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH + "/" + id);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI: " + uri);
+        }
+
+        return result;
+    }
+
+    @Override
+    public boolean onCreate() {
+        Log.d(TAG, "onCreate()");
+        dbHelper = new DBHelper(getContext());
+        return true;
+    }
+
+    @Override
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        Cursor cursor;
+        SQLiteDatabase db;
+
+        int uriType = sURIMatcher.match(uri);
+        switch (uriType) {
+            case CONTACT_ID:
+                // adding the ID to the original query
+                queryBuilder.appendWhere(CONTACT_COLUMN_ID + "=" + uri.getLastPathSegment());
+            case CONTACTS:
+                checkColumnsContact(projection);
+                queryBuilder.setTables(TABLE_CONTACT);
+                db = dbHelper.getWritableDatabase();
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown URI: " + uri);
+        }
+
+        cursor = queryBuilder.query(db, projection, selection, selectionArgs, null, null, sortOrder);
+        // make sure that potential listeners are getting notified
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
+        return cursor;
+    }
+
+    @Override
+    public int update(Uri uri, ContentValues values, String selection,
+            String[] selectionArgs) {
+        // TODO: Implement this to handle requests to update one or more rows.
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private void checkColumnsContact(String[] projection) {
+        if (projection != null) {
+            HashSet<String> requestedColumns = new HashSet<String>(Arrays.asList(projection));
+            HashSet<String> availableColumns = new HashSet<String>(Arrays.asList(CONTACT_ALL_COLUMNS));
+            // check if all columns which are requested are available
+            if (!availableColumns.containsAll(requestedColumns)) {
+                throw new IllegalArgumentException("Unknown columns in projection");
+            }
+        }
+    }
+
+}

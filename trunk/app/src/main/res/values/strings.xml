@@ -10,5 +10,8 @@
     <string name="signon_input_hint">Password</string>
     <string name="signon_btn_label">Sign On</string>
     <string name="action_sign_off">Sign Off</string>
+    <string name="no_contacts_message">No Contacts Found</string>
+    <string name="action_contact_add">Add Contact</string>
+    <string name="title_activity_scan_contact">Scan Contact</string>
 
 </resources>

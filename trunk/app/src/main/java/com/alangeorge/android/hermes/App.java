@@ -30,6 +30,7 @@ public class App extends Application {
     private static final String TAG = "App";
     private static final String PROPERTY_GCM_REG_ID = "gcm_registration_id";
     private static final String PROPERTY_APP_VERSION = "app_version";
+    private static final String PROPERTY_PASSWORD_HASH = "password_hash";
     public static final String KEYPAIR_ALIAS = "keypair_alias";
     public static final String DEFAULT_AES_SECURITY_PROVIDER = "BC";
     public static final String DEFAULT_AES_CIPHER = "AES";
@@ -74,8 +75,22 @@ public class App extends Application {
         }
     }
 
+    public static String getPasswordHash() {
+        SharedPreferences prefs = getPreferences();
+
+        return prefs.getString(PROPERTY_PASSWORD_HASH, null);
+    }
+
+    public static void storePasswordHash(String passwordHash) {
+        SharedPreferences prefs = getPreferences();
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(PROPERTY_PASSWORD_HASH, passwordHash);
+        editor.apply();
+    }
+
+
     public static String getGcmRegistrationId() {
-        final SharedPreferences prefs = getPreferences();
+        SharedPreferences prefs = getPreferences();
         String registrationId = prefs.getString(PROPERTY_GCM_REG_ID, "");
         if (registrationId.isEmpty()) {
             Log.i(TAG, "Registration not found.");
@@ -105,7 +120,7 @@ public class App extends Application {
     }
 
     public static void storeRegistrationId(String gcmRegistrationId) {
-        final SharedPreferences prefs = getPreferences();
+        SharedPreferences prefs = getPreferences();
         int appVersion = getAppVersion();
         Log.i(TAG, "Saving regId on app version " + appVersion);
         SharedPreferences.Editor editor = prefs.edit();
@@ -200,4 +215,5 @@ public class App extends Application {
     private static SharedPreferences getPreferences() {
         return PreferenceManager.getDefaultSharedPreferences(context);
     }
+
 }
