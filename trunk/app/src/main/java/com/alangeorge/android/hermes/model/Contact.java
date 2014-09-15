@@ -4,6 +4,7 @@ import android.database.Cursor;
 import android.net.Uri;
 
 import com.alangeorge.android.hermes.App;
+import com.google.gson.annotations.Expose;
 
 import java.util.Date;
 
@@ -15,8 +16,11 @@ public class Contact {
     private static final String TAG = "Contact";
 
     private long id;
+    @Expose
     private String name;
+    @Expose
     private String publicKey;
+    @Expose
     private String gcmId;
     private Date createTime;
 

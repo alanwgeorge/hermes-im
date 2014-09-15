@@ -1,5 +1,6 @@
 package com.alangeorge.android.hermes;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -15,8 +16,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 
 import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_NAME;
@@ -54,8 +57,12 @@ public class ContactFragment extends ListFragment implements LoaderManager.Loade
 
         switch (id) {
             case R.id.action_contact_add:
-                IntentIntegrator integrator = new IntentIntegrator(getActivity());
-                integrator.initiateScan();
+                IntentIntegrator intentIntegrator = IntentIntegrator.forSupportFragment(this);
+                intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+                intentIntegrator.initiateScan();
+                break;
+            case R.id.action_display_address_qr_code:
+                displayContactQrCode();
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -64,6 +71,23 @@ public class ContactFragment extends ListFragment implements LoaderManager.Loade
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if(result != null) {
+            if(result.getContents() == null) {
+                Toast.makeText(getActivity(), "Cancelled from Fragment", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getActivity(), "Scanned from fragment: " + result.getContents(), Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void displayContactQrCode() {
+        Intent intent = new Intent(getActivity(), QrDisplayActivity.class);
+        startActivity(intent);
     }
 
     @Override

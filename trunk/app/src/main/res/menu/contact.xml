@@ -6,4 +6,8 @@
           android:icon="@android:drawable/ic_menu_add"
           android:orderInCategory="100"
           android:showAsAction="ifRoom" />
+    <item android:id="@+id/action_display_address_qr_code"
+          android:title="@string/action_address_qr_code"
+          android:orderInCategory="100"
+          android:showAsAction="never" />
 </menu>
