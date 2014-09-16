@@ -176,7 +176,7 @@ public class MainActivity extends FragmentActivity {
     public void signOn(View view) {
         if (signOnFragment.signOn(view)) {
             getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.container, new ContactFragment())
+                    .replace(R.id.container, new ContactListFragment())
                     .commit();
         } else {
             Toast.makeText(App.context, "Sign On Failed", Toast.LENGTH_LONG).show();

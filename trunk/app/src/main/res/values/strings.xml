@@ -19,5 +19,9 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="dismiss_button">Dismiss</string>
     <string name="qr_code_image">QR Code Image</string>
+    <string name="title_getname_dialog">Contact Name</string>
+    <string name="message_getname_dialog">Set Contact Name</string>
+    <string name="label_getname_dialag_save">Save</string>
+    <string name="label_getname_dialag_cancel">Cancel</string>
 
 </resources>

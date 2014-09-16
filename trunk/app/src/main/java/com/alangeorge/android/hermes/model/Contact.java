@@ -2,6 +2,8 @@ package com.alangeorge.android.hermes.model;
 
 import android.database.Cursor;
 import android.net.Uri;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.alangeorge.android.hermes.App;
 import com.google.gson.annotations.Expose;
@@ -26,27 +28,19 @@ public class Contact {
 
     public Contact() { }
 
-    public Contact(long id) {
-        Uri locationUri = Uri.parse(CONTACTS_CONTENT_URI + "/" + id);
-
-        Cursor cursor = App.context.getContentResolver().query(
-                locationUri,
-                CONTACT_ALL_COLUMNS,
-                null,
-                null,
-                null
-        );
-
-        if (cursor != null) {
-            cursor.moveToFirst();
-            setId(cursor.getLong(0));
-            setName(cursor.getString(1));
-            setPublicKey(cursor.getString(2));
-            setGcmId(cursor.getString(3));
-            setCreateTime(new Date(cursor.getLong(4)));
-            cursor.close();
-        }
+    public Contact(long id) throws ModelException {
+        Uri uri = Uri.parse(CONTACTS_CONTENT_URI + "/" + id);
+        load(uri);
     }
+
+    public Contact(Uri uri) throws ModelException {
+        load(uri);
+    }
+
+    public Contact(Cursor cursor) throws ModelException {
+        load(cursor, false);
+    }
+
 
     public long getId() {
         return id;
@@ -86,6 +80,53 @@ public class Contact {
 
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
+    }
+
+    public boolean validateForInsert() {
+        boolean result = true;
+
+        if (TextUtils.isEmpty(gcmId)) {
+            Log.d(TAG, "gcmId isEmpty");
+            result = false;
+        }
+
+        if (TextUtils.isEmpty(publicKey)) {
+            Log.d(TAG, "publicKey isEmpty");
+            result = false;
+        }
+
+        if (TextUtils.isEmpty(name)) {
+            Log.d(TAG, "name isEmpty");
+            result = false;
+        }
+
+
+        return result;
+    }
+
+    private void load(Uri uri) throws ModelException {
+        Cursor cursor = App.context.getContentResolver().query(
+                uri,
+                CONTACT_ALL_COLUMNS,
+                null,
+                null,
+                null
+        );
+        cursor.moveToFirst();
+        load(cursor, true);
+    }
+
+    private void load(Cursor cursor, boolean closeCursor) throws ModelException {
+        if (cursor != null && cursor.getCount() > 0) {
+            setId(cursor.getLong(0));
+            setName(cursor.getString(1));
+            setPublicKey(cursor.getString(2));
+            setGcmId(cursor.getString(3));
+            setCreateTime(new Date(cursor.getLong(4)));
+            if (closeCursor) cursor.close();
+        } else {
+            throw new ModelException("unable to load: cursor null or count is 0");
+        }
     }
 
     /**

@@ -12,9 +12,11 @@ import android.util.Log;
 import com.alangeorge.android.hermes.model.dao.DBHelper;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_CREATE_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_ID;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_CONTACT;
 
@@ -38,13 +40,11 @@ public class HermesContentProvider extends ContentProvider {
 
     private DBHelper dbHelper;
 
-    public HermesContentProvider() {
-    }
+    public HermesContentProvider() { }
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
-        // Implement this to handle requests to delete one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     @Override
@@ -62,6 +62,7 @@ public class HermesContentProvider extends ContentProvider {
 
         switch (uriType) {
             case CONTACTS:
+                values.put(CONTACT_COLUMN_CREATE_TIME, new Date().getTime());
                 id = sqlDB.insert(TABLE_CONTACT, null, values);
                 getContext().getContentResolver().notifyChange(CONTACTS_CONTENT_URI, null);
                 result = Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH + "/" + id);
@@ -101,17 +102,15 @@ public class HermesContentProvider extends ContentProvider {
         }
 
         cursor = queryBuilder.query(db, projection, selection, selectionArgs, null, null, sortOrder);
-        // make sure that potential listeners are getting notified
+
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
 
         return cursor;
     }
 
     @Override
-    public int update(Uri uri, ContentValues values, String selection,
-            String[] selectionArgs) {
-        // TODO: Implement this to handle requests to update one or more rows.
-        throw new UnsupportedOperationException("Not yet implemented");
+    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     private void checkColumnsContact(String[] projection) {
