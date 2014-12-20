@@ -81,8 +81,13 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
     }
 
     @Override
-    public void onListItemClick(ListView l, View v, int position, long id) {
-        super.onListItemClick(l, v, position, id);
+    public void onListItemClick(ListView listView, View view, int position, long id) {
+        Log.d(TAG, "onListItemClick(" + listView + ", " + view + ", " + position + ", " + id + ")");
+        super.onListItemClick(listView, view, position, id);
+
+        Intent detailIntent = new Intent(getActivity(), ContactDetailActivity.class);
+        detailIntent.putExtra(ContactDetailActivity.ARG_ITEM_ID, id);
+        startActivity(detailIntent);
     }
 
     /**
