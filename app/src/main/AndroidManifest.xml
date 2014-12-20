@@ -59,6 +59,12 @@
             android:label="@string/title_activity_qr_display"
             android:theme="@style/FullscreenTheme" >
         </activity>
+
+        <activity
+            android:name=".ContactDetailActivity"
+            android:label="@string/title_activity_contact"
+            android:parentActivityName=".MainActivity">
+        </activity>
     </application>
 
 </manifest>

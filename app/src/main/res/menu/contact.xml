@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
     <item android:id="@+id/action_contact_add"
           android:title="@string/action_contact_add"
           android:icon="@android:drawable/ic_menu_add"
           android:orderInCategory="100"
-          android:showAsAction="ifRoom" />
+          app:showAsAction="ifRoom" />
     <item android:id="@+id/action_display_address_qr_code"
           android:title="@string/action_address_qr_code"
           android:orderInCategory="100"
-          android:showAsAction="never" />
+          app:showAsAction="never" />
 </menu>
