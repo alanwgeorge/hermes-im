@@ -14,15 +14,12 @@ import java.nio.charset.Charset;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.cert.Certificate;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -63,16 +60,16 @@ public class App extends Application {
         super.onCreate();
         context = getApplicationContext();
 
-        if (BuildConfig.DEBUG) {
-            Provider[] providers = Security.getProviders();
-            for (Provider provider : providers) {
-                Log.i("CRYPTO", "provider:" + provider.getName());
-                Set<Provider.Service> services = provider.getServices();
-                for (Provider.Service service : services) {
-                    Log.i("CRYPTO", "  algorithm: " + service.getAlgorithm());
-                }
-            }
-        }
+//        if (BuildConfig.DEBUG) {
+//            Provider[] providers = Security.getProviders();
+//            for (Provider provider : providers) {
+//                Log.i("CRYPTO", "provider:" + provider.getName());
+//                Set<Provider.Service> services = provider.getServices();
+//                for (Provider.Service service : services) {
+//                    Log.i("CRYPTO", "  algorithm: " + service.getAlgorithm());
+//                }
+//            }
+//        }
     }
 
     public static String getPasswordHash() {

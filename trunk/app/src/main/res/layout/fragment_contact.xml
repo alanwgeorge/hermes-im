@@ -6,11 +6,27 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="com.alangeorge.android.hermes.ContactDetailActivity$PlaceholderFragment">
+    tools:context="com.alangeorge.android.hermes.ContactDetailActivity.ContactDetailFragment">
 
     <TextView
         android:text="@string/hello_world"
+        android:id="@+id/contact_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/message_text"
+        android:layout_below="@+id/contact_name"
+        android:layout_alignParentStart="true"
+        android:hint="Message"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send Message"
+        android:id="@+id/send_button"
+        android:layout_below="@+id/message_text"/>
 
 </RelativeLayout>

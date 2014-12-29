@@ -135,7 +135,7 @@ public class Contact {
      * @param cursor the {@link android.database.Cursor} to convert
      * @return the resulting {@link com.alangeorge.android.hermes.model.Contact}
      */
-    private static Contact cursorToContact(Cursor cursor) {
+    public static Contact cursorToContact(Cursor cursor) {
         Contact contact = new Contact();
 
         contact.setId(cursor.getLong(0));

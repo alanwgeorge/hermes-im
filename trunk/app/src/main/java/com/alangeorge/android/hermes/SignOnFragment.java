@@ -9,6 +9,8 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -27,6 +29,11 @@ public class SignOnFragment extends Fragment {
         // Required empty public constructor
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,6 +50,13 @@ public class SignOnFragment extends Fragment {
         super.onResume();
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear(); // sign on has no menu
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
     public boolean signOn(View view) {
         Log.d(TAG, "signOn(" + view + ")");
 
@@ -51,7 +65,6 @@ public class SignOnFragment extends Fragment {
         imm.hideSoftInputFromWindow(passwordView.getWindowToken(), 0);
 
         String incomingPassword = passwordView.getText().toString();
-        Log.d(TAG, "password entered: " + incomingPassword);
 
         passwordView.setText("");
 

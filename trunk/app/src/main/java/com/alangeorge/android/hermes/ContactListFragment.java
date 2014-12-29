@@ -2,6 +2,7 @@ package com.alangeorge.android.hermes;
 
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -38,7 +39,7 @@ import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_PU
 import static com.alangeorge.android.hermes.model.provider.HermesContentProvider.CONTACTS_CONTENT_URI;
 
 public class ContactListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
-    private static final String TAG = "ContactFragment";
+    private static final String TAG = "ContactListFragment";
 
     private SimpleCursorAdapter adapter;
 
@@ -85,8 +86,12 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
         Log.d(TAG, "onListItemClick(" + listView + ", " + view + ", " + position + ", " + id + ")");
         super.onListItemClick(listView, view, position, id);
 
+        Contact contact = (Contact) view.getTag(R.id.contact_view_tag_id);
+
+        Log.d(TAG, "contact from view = " + contact);
+
         Intent detailIntent = new Intent(getActivity(), ContactDetailActivity.class);
-        detailIntent.putExtra(ContactDetailActivity.ARG_ITEM_ID, id);
+        detailIntent.putExtra(ContactDetailActivity.ARG_ITEM_ID, contact.getId());
         startActivity(detailIntent);
     }
 
@@ -216,15 +221,33 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
         };
 
         int[] to = new int[] {
-                R.id.contactNameTextView
+                R.id.contact_name
         };
 
         //getLoaderManager().enableDebugLogging(true);
         getLoaderManager().initLoader(0, null, this);
 
-        adapter = new SimpleCursorAdapter(getActivity(), R.layout.list_item_contact, null, from, to, 0);
+        adapter = new ContactCursorAdapter(getActivity(), R.layout.list_item_contact, null, from, to, 0);
 
         setListAdapter(adapter);
+    }
 
+    private static class ContactCursorAdapter extends SimpleCursorAdapter {
+        @SuppressWarnings("UnusedDeclaration")
+        private static final String TAG = "ContactCursorAdapter";
+
+        public ContactCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to, int flags) {
+            super(context, layout, c, from, to, flags);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View view = super.getView(position, convertView, parent);
+
+            // here we set a convenience data object on the view for easy access to data about this Contact item
+            view.setTag(R.id.contact_view_tag_id, Contact.cursorToContact(getCursor()));
+
+            return view;
+        }
     }
 }
