@@ -2,15 +2,12 @@ package com.alangeorge.android.hermes;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Base64;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.alangeorge.android.hermes.model.Message;
@@ -31,7 +28,7 @@ import static com.alangeorge.android.hermes.App.DEFAULT_CHARACTER_SET;
 import static com.alangeorge.android.hermes.App.DEFAULT_RSA_CIPHER;
 import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
 
-public class MainActivity extends FragmentActivity {
+public class MainActivity extends ActionBarActivity {
     private static final String TAG = "MainActivity";
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String SENDER_ID = "323620638301";
@@ -260,20 +257,5 @@ public class MainActivity extends FragmentActivity {
         }
 
         return secretKeySpec;
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            @SuppressWarnings("UnnecessaryLocalVariable") View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
-        }
     }
 }

@@ -18,7 +18,10 @@ import java.util.HashSet;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_CREATE_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_ID;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_CREATE_TIME;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_READ_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_CONTACT;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_MESSAGE;
 
 public class HermesContentProvider extends ContentProvider {
     private static final String TAG = "HermesContentProvider";
@@ -26,16 +29,22 @@ public class HermesContentProvider extends ContentProvider {
     // used for the UriMatcher
     private static final int CONTACTS = 10;
     private static final int CONTACT_ID = 20;
+    private static final int MESSAGES = 30;
+    private static final int MESSAGE_ID = 40;
 
     private static final String CONTACTS_PATH = "contacts";
+    private static final String MESSAGES_PATH = "messages";
 
     public static final String AUTHORITY = "com.alangeorge.android.hermes.contentprovider";
     public static final Uri CONTACTS_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH);
+    public static final Uri MESSAGES_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + MESSAGES_PATH);
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
         sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH, CONTACTS);
         sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH + "/#", CONTACT_ID);
+        sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH, MESSAGES);
+        sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH + "/#", MESSAGE_ID);
     }
 
     private DBHelper dbHelper;
@@ -66,6 +75,13 @@ public class HermesContentProvider extends ContentProvider {
                 id = sqlDB.insert(TABLE_CONTACT, null, values);
                 getContext().getContentResolver().notifyChange(CONTACTS_CONTENT_URI, null);
                 result = Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH + "/" + id);
+                break;
+            case MESSAGES:
+                values.put(MESSAGE_COLUMN_CREATE_TIME, new Date().getTime());
+                values.put(MESSAGE_COLUMN_READ_TIME, -1); // == not read
+                id = sqlDB.insert(TABLE_MESSAGE, null, values);
+                getContext().getContentResolver().notifyChange(MESSAGES_CONTENT_URI, null);
+                result = Uri.parse("content://" + AUTHORITY + "/" + MESSAGES_PATH + "/" + id);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
@@ -115,8 +131,8 @@ public class HermesContentProvider extends ContentProvider {
 
     private void checkColumnsContact(String[] projection) {
         if (projection != null) {
-            HashSet<String> requestedColumns = new HashSet<String>(Arrays.asList(projection));
-            HashSet<String> availableColumns = new HashSet<String>(Arrays.asList(CONTACT_ALL_COLUMNS));
+            HashSet<String> requestedColumns = new HashSet<>(Arrays.asList(projection));
+            HashSet<String> availableColumns = new HashSet<>(Arrays.asList(CONTACT_ALL_COLUMNS));
             // check if all columns which are requested are available
             if (!availableColumns.containsAll(requestedColumns)) {
                 throw new IllegalArgumentException("Unknown columns in projection");
