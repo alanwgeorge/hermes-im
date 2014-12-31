@@ -22,19 +22,27 @@ public class MessageSenderService extends Service {
     public static final String ARG_GCM_ID = "arg_gcm_id";
     public static final String ARG_ERROR_TEXT = "arg_error_text";
 
-    private Looper serviceLooper;
     private Messenger serviceMessenger;
+    private boolean isRunning = false;
 
     public MessageSenderService() { }
 
     @Override
     public void onCreate() {
         super.onCreate();
+
         HandlerThread thread = new HandlerThread("MessageSenderServiceThread", Process.THREAD_PRIORITY_DEFAULT);
         thread.start();
 
-        serviceLooper = thread.getLooper();
-        serviceMessenger = new Messenger(new InboundMessageHandler(serviceLooper));
+        serviceMessenger = new Messenger(new InboundMessageHandler(thread.getLooper()));
+
+        isRunning = true;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        isRunning = false;
     }
 
     @Override
@@ -43,10 +51,24 @@ public class MessageSenderService extends Service {
     }
 
     @SuppressWarnings("UnusedParameters")
-    private void sendGcmMessage(String messageText, String gcmId, Messenger replyTo) {
+    private void sendGcmMessage(String messageText, String gcmId) {
         Log.d(TAG, "sendGcmMessage()");
 
         //TODO send GCM message
+        Log.d(TAG, "wait()ing 3 seconds");
+        long endTime = System.currentTimeMillis() + 3*1000;
+        while (System.currentTimeMillis() < endTime) {
+            synchronized (this) {
+                try {
+                    wait(endTime - System.currentTimeMillis());
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+
+    public boolean isRunning() {
+        return isRunning;
     }
 
     private class InboundMessageHandler extends Handler {
@@ -83,7 +105,7 @@ public class MessageSenderService extends Service {
                         return;
                     }
 
-                    sendGcmMessage(messageText, gcmId, message.replyTo);
+                    sendGcmMessage(messageText, gcmId);
 
                     Message reply = Message.obtain(null, MSG_SEND_SUCCESS);
                     reply.getData().putString(ARG_MESSAGE_TEXT, messageText);
