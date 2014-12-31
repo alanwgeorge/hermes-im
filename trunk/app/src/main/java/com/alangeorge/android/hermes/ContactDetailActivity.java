@@ -1,7 +1,14 @@
 package com.alangeorge.android.hermes;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -16,7 +23,17 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alangeorge.android.hermes.model.Contact;
+import com.alangeorge.android.hermes.model.Message;
 import com.alangeorge.android.hermes.model.ModelException;
+import com.alangeorge.android.hermes.services.MessageSenderService;
+
+import java.security.KeyPair;
+
+import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_GCM_ID;
+import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_MESSAGE_TEXT;
+import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_FAILED;
+import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_MESSAGE;
+import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_SUCCESS;
 
 
 public class ContactDetailActivity extends ActionBarActivity {
@@ -73,7 +90,36 @@ public class ContactDetailActivity extends ActionBarActivity {
         private EditText messageEditText;
         private Contact contact;
 
+        private Messenger messageSenderServiceMessenger = null;
+        private Messenger contactDetailFragmentMessenger = new Messenger(new MessageSenderServiceInboundMessageHandler());
+
+        private ServiceConnection messageSenderServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                Log.d(TAG, "onServiceConnected(" + name + ", " + service + ")");
+                messageSenderServiceMessenger = new Messenger(service);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                Log.d(TAG, "onServiceDisconnected(" + name + ")");
+                messageSenderServiceMessenger = null;
+            }
+        };
+
         public ContactDetailFragment() { }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+            getActivity().bindService(new Intent(getActivity(), MessageSenderService.class), messageSenderServiceConnection, Context.BIND_AUTO_CREATE);
+        }
+
+        @Override
+        public void onStop() {
+            super.onStop();
+            getActivity().unbindService(messageSenderServiceConnection);
+        }
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -110,6 +156,62 @@ public class ContactDetailActivity extends ActionBarActivity {
         public void onClick(View v) {
             Log.d(TAG, "onClick()");
             Log.d(TAG, "message text = " + messageEditText.getText());
+
+            if (messageSenderServiceMessenger == null) {
+                Toast.makeText(getActivity(), "Unable to send messages, not bound to message sending service", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            String gcmId = App.getGcmRegistrationId();
+            KeyPair fromKeyPair = App.getMyKeyPair();
+
+            if (gcmId == null || "".equals(gcmId)) {
+                Toast.makeText(getActivity(), "Unable to send messages with a null GCM registration ID", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            if (fromKeyPair == null) {
+                Toast.makeText(getActivity(), "Unable to send messages with a null KeyPair", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            MessageMaker messageMaker = new MessageMaker();
+            Message message;
+
+            try {
+                message = messageMaker.make(messageEditText.getText().toString(), contact, App.getGcmRegistrationId(), App.getMyKeyPair());
+            } catch (MessageMakerException e) {
+                Toast.makeText(getActivity(), "Unable to create message", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            android.os.Message serviceMessage = android.os.Message.obtain(null, MSG_SEND_MESSAGE);
+            serviceMessage.getData().putString(ARG_MESSAGE_TEXT, message.toJson());
+            serviceMessage.getData().putString(ARG_GCM_ID, gcmId);
+            serviceMessage.replyTo = contactDetailFragmentMessenger;
+            try {
+                messageSenderServiceMessenger.send(serviceMessage);
+            } catch (RemoteException e) {
+                Log.e(TAG, "error communicating with MessageSenderService", e);
+                Toast.makeText(getActivity(), "error communicating with MessageSenderService", Toast.LENGTH_LONG).show();
+            }
+        }
+
+        private class MessageSenderServiceInboundMessageHandler extends Handler {
+            @Override
+            public void handleMessage(android.os.Message msg) {
+                switch (msg.what) {
+                    case MSG_SEND_SUCCESS:
+                        Log.d(TAG, "Message send success");
+                        break;
+                    case MSG_SEND_FAILED:
+                        Log.e(TAG, "Message send failed");
+                        break;
+                    default:
+                        Log.d(TAG, "unknown message : " + msg.what);
+                        super.handleMessage(msg);
+                }
+            }
         }
     }
 }

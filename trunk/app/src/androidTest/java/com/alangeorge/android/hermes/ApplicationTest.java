@@ -1,4 +1,4 @@
-package com.alangeorge.android.hermes.hermes;
+package com.alangeorge.android.hermes;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

@@ -61,8 +61,8 @@ public class SignOnFragment extends Fragment {
         Log.d(TAG, "signOn(" + view + ")");
 
         // hide keyboard
-        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(passwordView.getWindowToken(), 0);
+        InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(passwordView.getWindowToken(), 0);
 
         String incomingPassword = passwordView.getText().toString();
 
@@ -72,8 +72,8 @@ public class SignOnFragment extends Fragment {
         String storedPasswordHash = App.getPasswordHash();
 
         if (TextUtils.isEmpty(storedPasswordHash)) {
-            App.deleteKayPair();
-            App.getKeyPair();
+            App.deleteMyKeyPair();
+            App.getMyKeyPair();
             App.storePasswordHash(incomingPasswordHash);
             Toast.makeText(App.context, "New account created", Toast.LENGTH_LONG).show();
 

@@ -3,13 +3,20 @@ package com.alangeorge.android.hermes.model;
 import android.database.Cursor;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 
-import com.alangeorge.android.hermes.App;
 import com.google.gson.annotations.Expose;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
 
+import static com.alangeorge.android.hermes.App.DEFAULT_KEYPAIR_ALGORITHM;
+import static com.alangeorge.android.hermes.App.context;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
 import static com.alangeorge.android.hermes.model.provider.HermesContentProvider.CONTACTS_CONTENT_URI;
 
@@ -58,11 +65,11 @@ public class Contact {
         this.name = name;
     }
 
-    public String getPublicKey() {
+    public String getPublicKeyEncoded() {
         return publicKey;
     }
 
-    public void setPublicKey(String publicKey) {
+    public void setPublicKeyEncoded(String publicKey) {
         this.publicKey = publicKey;
     }
 
@@ -104,8 +111,12 @@ public class Contact {
         return result;
     }
 
+    public PublicKey getPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        return KeyFactory.getInstance(DEFAULT_KEYPAIR_ALGORITHM).generatePublic(new X509EncodedKeySpec(Base64.decode(getPublicKeyEncoded(), Base64.NO_WRAP)));
+    }
+
     private void load(Uri uri) throws ModelException {
-        Cursor cursor = App.context.getContentResolver().query(
+        Cursor cursor = context.getContentResolver().query(
                 uri,
                 CONTACT_ALL_COLUMNS,
                 null,
@@ -120,7 +131,7 @@ public class Contact {
         if (cursor != null && cursor.getCount() > 0) {
             setId(cursor.getLong(0));
             setName(cursor.getString(1));
-            setPublicKey(cursor.getString(2));
+            setPublicKeyEncoded(cursor.getString(2));
             setGcmId(cursor.getString(3));
             setCreateTime(new Date(cursor.getLong(4)));
             if (closeCursor) cursor.close();
@@ -140,7 +151,7 @@ public class Contact {
 
         contact.setId(cursor.getLong(0));
         contact.setName(cursor.getString(1));
-        contact.setPublicKey(cursor.getString(2));
+        contact.setPublicKeyEncoded(cursor.getString(2));
         contact.setGcmId(cursor.getString(3));
         contact.setCreateTime(new Date(cursor.getLong(4)));
 

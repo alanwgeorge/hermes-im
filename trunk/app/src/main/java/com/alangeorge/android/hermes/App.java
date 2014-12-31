@@ -19,7 +19,6 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Enumeration;
 
 import javax.security.auth.x500.X500Principal;
 
@@ -28,11 +27,14 @@ public class App extends Application {
     private static final String PROPERTY_GCM_REG_ID = "gcm_registration_id";
     private static final String PROPERTY_APP_VERSION = "app_version";
     private static final String PROPERTY_PASSWORD_HASH = "password_hash";
-    public static final String KEYPAIR_ALIAS = "keypair_alias";
+    public static final String KEYPAIR_ALIAS = "hermes_keypair_alias";
     public static final String DEFAULT_AES_SECURITY_PROVIDER = "BC";
     public static final String DEFAULT_AES_CIPHER = "AES";
     public static final String DEFAULT_RSA_SECURITY_PROVIDER = "AndroidOpenSSL";
     public static final String DEFAULT_RSA_CIPHER = "RSA/ECB/PKCS1Padding";
+    public static final String DEFAULT_KEYPAIR_ALGORITHM = "RSA";
+    public static final String DEFAULT_KEYPAIR_PROVIDER = "AndroidKeyStore";
+    public static final String DEFAULT_SIGNATURE_ALGORITHM = "SHA512withRSA";
     public static final Charset DEFAULT_CHARACTER_SET = Charset.forName("UTF-8");
 
     public static final SecureRandom secureRandom;
@@ -126,16 +128,16 @@ public class App extends Application {
         editor.apply();
     }
 
-    public static KeyPair getKeyPair() {
+    public static KeyPair getMyKeyPair() {
         KeyStore keyStore;
         try {
-            keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore = KeyStore.getInstance(DEFAULT_KEYPAIR_PROVIDER);
             keyStore.load(null);
 
-            Enumeration<String> keys = keyStore.aliases();
-            while (keys.hasMoreElements()) {
-                Log.d(TAG, "keystore alias: " + keys.nextElement());
-            }
+//            Enumeration<String> keys = keyStore.aliases();
+//            while (keys.hasMoreElements()) {
+//                Log.d(TAG, "keystore alias: " + keys.nextElement());
+//            }
 
             KeyStore.Entry entry = keyStore.getEntry(KEYPAIR_ALIAS, null);
 
@@ -162,6 +164,14 @@ public class App extends Application {
             Log.e(TAG, "unable to get KeyPair from KeyStore", throwable);
         }
 
+        return makeKeyPair(KEYPAIR_ALIAS);
+    }
+
+    public static void deleteMyKeyPair() {
+        deleteKeyPair(KEYPAIR_ALIAS);
+    }
+
+    public static KeyPair makeKeyPair(String alias) {
         Calendar cal = Calendar.getInstance();
         Date now = cal.getTime();
         cal.add(Calendar.YEAR, 1);
@@ -170,16 +180,16 @@ public class App extends Application {
         KeyPair keyPair = null;
 
         try {
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(DEFAULT_KEYPAIR_ALGORITHM, DEFAULT_KEYPAIR_PROVIDER);
 
             keyPairGenerator.initialize(new KeyPairGeneratorSpec.Builder(context)
-                    .setAlias(KEYPAIR_ALIAS)
+                    .setAlias(alias)
                     .setStartDate(now)
                     .setEndDate(end)
                     .setSerialNumber(BigInteger.valueOf(1))
                     .setSubject(new X500Principal("CN=test1"))
 //                    .setEncryptionRequired()
-                    .setKeySize(2048)
+//                    .setKeySize(2048)
                     .build());
 
             keyPair = keyPairGenerator.generateKeyPair();
@@ -193,12 +203,12 @@ public class App extends Application {
         return keyPair;
     }
 
-    public static void deleteKayPair() {
+    public static void deleteKeyPair(String alias) {
         KeyStore keyStore;
         try {
-            keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore = KeyStore.getInstance(DEFAULT_KEYPAIR_PROVIDER);
             keyStore.load(null);
-            keyStore.deleteEntry(KEYPAIR_ALIAS);
+            keyStore.deleteEntry(alias);
 //        } catch (KeyStoreException e) {
 //        } catch (CertificateException e) {
 //        } catch (NoSuchAlgorithmException e) {
@@ -207,7 +217,6 @@ public class App extends Application {
             Log.e(TAG, "unable to delete KeyPair", throwable);
         }
     }
-
 
     private static SharedPreferences getPreferences() {
         return PreferenceManager.getDefaultSharedPreferences(context);

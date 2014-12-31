@@ -59,12 +59,17 @@
             android:label="@string/title_activity_qr_display"
             android:theme="@style/FullscreenTheme" >
         </activity>
-
         <activity
             android:name=".ContactDetailActivity"
             android:label="@string/title_activity_contact"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".MainActivity" >
         </activity>
+
+        <service
+            android:name=".services.MessageSenderService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>
