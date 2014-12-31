@@ -146,7 +146,7 @@ public class QrDisplayActivity extends Activity {
 
         Contact meContact = new Contact();
         meContact.setGcmId(App.getGcmRegistrationId());
-        meContact.setPublicKey(Base64.encodeToString(App.getKeyPair().getPublic().getEncoded(), Base64.NO_WRAP));
+        meContact.setPublicKeyEncoded(Base64.encodeToString(App.getMyKeyPair().getPublic().getEncoded(), Base64.NO_WRAP));
 
         String meString = gson.toJson(meContact);
 

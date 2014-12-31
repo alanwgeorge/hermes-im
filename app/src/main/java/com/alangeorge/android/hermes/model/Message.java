@@ -12,6 +12,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 
 import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
+import static com.alangeorge.android.hermes.App.DEFAULT_SIGNATURE_ALGORITHM;
 
 public class Message {
     private static final String TAG = "Message";
@@ -59,7 +60,7 @@ public class Message {
         }
 
         try {
-            Signature secretKeySigner = Signature.getInstance("SHA512withRSA", DEFAULT_RSA_SECURITY_PROVIDER);
+            Signature secretKeySigner = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM, DEFAULT_RSA_SECURITY_PROVIDER);
             secretKeySigner.initSign(senderPrivateKey);
             secretKeySigner.update(body.getGcmRegistrationId().getBytes());
             secretKeySigner.update(body.getPublicKey().getBytes());
@@ -78,12 +79,12 @@ public class Message {
 
     public boolean verify(PublicKey senderPublicKey) {
         if (body == null) {
-            Log.e(TAG, "message body null, not signing");
+            Log.e(TAG, "invalid message, message body is null");
             return false;
         }
 
         try {
-            Signature secretKeyVerifier = Signature.getInstance("SHA512withRSA", DEFAULT_RSA_SECURITY_PROVIDER);
+            Signature secretKeyVerifier = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM, DEFAULT_RSA_SECURITY_PROVIDER);
             secretKeyVerifier.initVerify(senderPublicKey);
             secretKeyVerifier.update(body.getGcmRegistrationId().getBytes());
             secretKeyVerifier.update(body.getPublicKey().getBytes());

@@ -152,7 +152,7 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
 
                             values.put(CONTACT_COLUMN_NAME, contact.getName());
                             values.put(CONTACT_COLUMN_GCM_ID, contact.getGcmId());
-                            values.put(CONTACT_COLUMN_PUBLIC_KEY, contact.getPublicKey());
+                            values.put(CONTACT_COLUMN_PUBLIC_KEY, contact.getPublicKeyEncoded());
 
                             Uri insertedContactUri = getActivity().getContentResolver().insert(CONTACTS_CONTENT_URI, values);
 
