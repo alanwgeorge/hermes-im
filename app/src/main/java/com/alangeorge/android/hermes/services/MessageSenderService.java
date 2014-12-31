@@ -12,6 +12,13 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.alangeorge.android.hermes.App;
+import com.alangeorge.android.hermes.R;
+import com.google.android.gcm.server.Result;
+import com.google.android.gcm.server.Sender;
+
+import java.io.IOException;
+
 public class MessageSenderService extends Service {
     private static final String TAG = "MessageSenderService";
 
@@ -50,21 +57,18 @@ public class MessageSenderService extends Service {
         return serviceMessenger.getBinder();
     }
 
-    @SuppressWarnings("UnusedParameters")
-    private void sendGcmMessage(String messageText, String gcmId) {
+    private Result sendGcmMessage(String messageText, String gcmId) throws IOException {
         Log.d(TAG, "sendGcmMessage()");
 
-        //TODO send GCM message
-        Log.d(TAG, "wait()ing 3 seconds");
-        long endTime = System.currentTimeMillis() + 3*1000;
-        while (System.currentTimeMillis() < endTime) {
-            synchronized (this) {
-                try {
-                    wait(endTime - System.currentTimeMillis());
-                } catch (Exception ignored) {
-                }
-            }
-        }
+        Sender sender = new Sender(App.context.getResources().getString(R.string.gcm_sender_key));
+        com.google.android.gcm.server.Message.Builder builder = new com.google.android.gcm.server.Message.Builder();
+        builder.addData(App.context.getString(R.string.gcm_message_field_message), messageText);
+        com.google.android.gcm.server.Message message = builder.build();
+        Result result = sender.send(message, gcmId, 5);
+
+        Log.d(TAG, "sent PN with result: " + result);
+
+        return result;
     }
 
     public boolean isRunning() {
@@ -105,9 +109,25 @@ public class MessageSenderService extends Service {
                         return;
                     }
 
-                    sendGcmMessage(messageText, gcmId);
-
                     Message reply = Message.obtain(null, MSG_SEND_SUCCESS);
+                    Result result = null;
+                    try {
+                        result = sendGcmMessage(messageText, gcmId);
+                    } catch (IOException e) {
+                        Log.e(TAG, "failed to send GCM message: IOException", e);
+                        reply = Message.obtain(null, MSG_SEND_FAILED);
+                    }
+
+                    if (result != null && result.getErrorCodeName() != null) {
+                        Log.e(TAG, "failed to send GCM message: " + result.getErrorCodeName());
+                        reply = Message.obtain(null, MSG_SEND_FAILED);
+                    }
+
+                    if (result != null && result.getCanonicalRegistrationId() != null) {
+                        Log.i(TAG, "Canonical ID returned");
+                        //TODO update contact with new GCM ID
+                    }
+
                     reply.getData().putString(ARG_MESSAGE_TEXT, messageText);
                     reply.getData().putString(ARG_GCM_ID, gcmId);
                     try {

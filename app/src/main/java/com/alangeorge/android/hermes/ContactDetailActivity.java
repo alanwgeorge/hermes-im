@@ -196,7 +196,7 @@ public class ContactDetailActivity extends ActionBarActivity {
 
             android.os.Message serviceMessage = android.os.Message.obtain(null, MSG_SEND_MESSAGE);
             serviceMessage.getData().putString(ARG_MESSAGE_TEXT, message.toJson());
-            serviceMessage.getData().putString(ARG_GCM_ID, gcmId);
+            serviceMessage.getData().putString(ARG_GCM_ID, contact.getGcmId());
             serviceMessage.replyTo = contactDetailFragmentMessenger;
             try {
                 messageSenderServiceMessenger.send(serviceMessage);

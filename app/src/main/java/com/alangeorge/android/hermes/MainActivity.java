@@ -20,7 +20,6 @@ import java.security.KeyPair;
 public class MainActivity extends ActionBarActivity {
     private static final String TAG = "MainActivity";
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-    private static final String SENDER_ID = "323620638301";
 
     private GoogleCloudMessaging gcm;
     private SignOnFragment signOnFragment = new SignOnFragment();
@@ -119,7 +118,7 @@ public class MainActivity extends ActionBarActivity {
                     if (gcm == null) {
                         gcm = GoogleCloudMessaging.getInstance(getApplicationContext());
                     }
-                    String gcmRegistrationId = gcm.register(SENDER_ID);
+                    String gcmRegistrationId = gcm.register(getResources().getString(R.string.gcm_sender_id));
                     msg = "Device registered, registration ID=" + gcmRegistrationId;
 
                     sendGcmRegistrationIdToBackend();
