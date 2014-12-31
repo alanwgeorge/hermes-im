@@ -107,18 +107,27 @@ public class ContactDetailActivity extends ActionBarActivity {
             }
         };
 
+        @SuppressWarnings("UnusedDeclaration")
+        private boolean isServiceBound = false;
+
         public ContactDetailFragment() { }
 
         @Override
         public void onStart() {
             super.onStart();
-            getActivity().bindService(new Intent(getActivity(), MessageSenderService.class), messageSenderServiceConnection, Context.BIND_AUTO_CREATE);
+            if (! getActivity().bindService(new Intent(getActivity(), MessageSenderService.class), messageSenderServiceConnection, Context.BIND_AUTO_CREATE)) {
+                Log.e(TAG, "failed to bind to MessageSenderService");
+                isServiceBound = false;
+            } else {
+                isServiceBound = true;
+            }
         }
 
         @Override
         public void onStop() {
             super.onStop();
             getActivity().unbindService(messageSenderServiceConnection);
+            isServiceBound = false;
         }
 
         @Override
