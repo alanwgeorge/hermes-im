@@ -38,7 +38,7 @@ import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SE
 
 public class ContactDetailActivity extends ActionBarActivity {
     @SuppressWarnings("UnusedDeclaration")
-    private static final String TAG = "ContactDetailActivity";
+    private static final String TAG = "Hermes.ContactDetailActivity";
     public static final String ARG_ITEM_ID = "arg_item_id";
 
     private ContactDetailFragment fragment = new ContactDetailFragment();
@@ -85,7 +85,7 @@ public class ContactDetailActivity extends ActionBarActivity {
     }
 
     public static class ContactDetailFragment extends Fragment implements View.OnClickListener {
-        private static final String TAG = "ContactDetailFragment";
+        private static final String TAG = "Hermes.ContactDetailFragment";
 
         private EditText messageEditText;
         private Contact contact;

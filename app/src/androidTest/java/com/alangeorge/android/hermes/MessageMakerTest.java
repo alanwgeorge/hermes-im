@@ -21,7 +21,7 @@ import static com.alangeorge.android.hermes.App.DEFAULT_RSA_CIPHER;
 import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
 
 public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
-    private static final String TAG = "MessageMakerTest";
+    private static final String TAG = "Hermes.MessageMakerTest";
 
     public MessageMakerTest() {
         super(MainActivity.class);
@@ -51,7 +51,7 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
 
         Message message = messageMaker.make(messageText, to, gcmId, fromKeyPair);
 
-        assertTrue("message failed to verify()", message.verify(fromKeyPair.getPublic()));
+        assertTrue("message failed to verifySignature()", message.verifySignature());
 
         String messageJson = message.toJson();
 
@@ -61,7 +61,7 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
         // create new message from previous message's Json
         message = new Message(messageJson);
 
-        assertTrue("new message failed to verify() after Json marshalling", message.verify(fromKeyPair.getPublic()));
+        assertTrue("new message failed to verifySignature() after Json marshalling", message.verifySignature());
 
         // now we attempt to retrieve our message
 

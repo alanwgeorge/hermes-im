@@ -8,14 +8,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.Signature;
 
 import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
 import static com.alangeorge.android.hermes.App.DEFAULT_SIGNATURE_ALGORITHM;
 
 public class Message {
-    private static final String TAG = "Message";
+    private static final String TAG = "Hermes.Message";
 
     private Gson gson;
 
@@ -63,7 +62,7 @@ public class Message {
             Signature secretKeySigner = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM, DEFAULT_RSA_SECURITY_PROVIDER);
             secretKeySigner.initSign(senderPrivateKey);
             secretKeySigner.update(body.getGcmRegistrationId().getBytes());
-            secretKeySigner.update(body.getPublicKey().getBytes());
+            secretKeySigner.update(body.getSenderPublicKey().getBytes());
             secretKeySigner.update(body.getMessageKey().getBytes());
             secretKeySigner.update(body.getMessage().getBytes());
 
@@ -77,17 +76,22 @@ public class Message {
         }
     }
 
-    public boolean verify(PublicKey senderPublicKey) {
+    public boolean verifySignature() {
         if (body == null) {
             Log.e(TAG, "invalid message, message body is null");
             return false;
         }
 
+        if (body.getSenderPublicKey() == null || "".equals(body.getSenderPublicKey())) {
+            Log.e(TAG, "sender public key is null or empty");
+            return false;
+        }
+
         try {
             Signature secretKeyVerifier = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM, DEFAULT_RSA_SECURITY_PROVIDER);
-            secretKeyVerifier.initVerify(senderPublicKey);
+            secretKeyVerifier.initVerify(Contact.decodePublicKey(body.getSenderPublicKey()));
             secretKeyVerifier.update(body.getGcmRegistrationId().getBytes());
-            secretKeyVerifier.update(body.getPublicKey().getBytes());
+            secretKeyVerifier.update(body.getSenderPublicKey().getBytes());
             secretKeyVerifier.update(body.getMessageKey().getBytes());
             secretKeyVerifier.update(body.getMessage().getBytes());
             return secretKeyVerifier.verify(Base64.decode(signature, Base64.NO_WRAP));
@@ -118,7 +122,7 @@ public class Message {
         @Expose
         private String gcmRegistrationId;
         @Expose
-        private String publicKey;
+        private String senderPublicKey;
         @Expose
         private String messageKey;
         @Expose
@@ -132,12 +136,12 @@ public class Message {
             this.gcmRegistrationId = gcmRegistrationId;
         }
 
-        public String getPublicKey() {
-            return publicKey;
+        public String getSenderPublicKey() {
+            return senderPublicKey;
         }
 
-        public void setPublicKey(String publicKey) {
-            this.publicKey = publicKey;
+        public void setSenderPublicKey(String publicKey) {
+            this.senderPublicKey = publicKey;
         }
 
         public String getMessageKey() {
@@ -160,7 +164,7 @@ public class Message {
         public String toString() {
             return "Body{" +
                     "gcmRegistrationId='" + gcmRegistrationId + '\'' +
-                    ", publicKey='" + publicKey + '\'' +
+                    ", senderPublicKey='" + senderPublicKey + '\'' +
                     ", messageKey='" + messageKey + '\'' +
                     ", message='" + message + '\'' +
                     '}';

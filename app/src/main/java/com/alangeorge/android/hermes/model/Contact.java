@@ -22,7 +22,7 @@ import static com.alangeorge.android.hermes.model.provider.HermesContentProvider
 
 @SuppressWarnings("UnusedDeclaration")
 public class Contact {
-    private static final String TAG = "Contact";
+    private static final String TAG = "Hermes.Contact";
 
     private long id;
     @Expose
@@ -112,7 +112,11 @@ public class Contact {
     }
 
     public PublicKey getPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        return KeyFactory.getInstance(DEFAULT_KEYPAIR_ALGORITHM).generatePublic(new X509EncodedKeySpec(Base64.decode(getPublicKeyEncoded(), Base64.NO_WRAP)));
+        return Contact.decodePublicKey(getPublicKeyEncoded());
+    }
+
+    public static PublicKey decodePublicKey(String base64EncodedKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        return KeyFactory.getInstance(DEFAULT_KEYPAIR_ALGORITHM).generatePublic(new X509EncodedKeySpec(Base64.decode(base64EncodedKey, Base64.NO_WRAP)));
     }
 
     private void load(Uri uri) throws ModelException {

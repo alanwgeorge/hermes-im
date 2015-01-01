@@ -20,7 +20,7 @@ import android.util.Log;
  * </pre>
  */
 public class DBHelper extends SQLiteOpenHelper {
-    private static final String TAG = "DBHelper";
+    private static final String TAG = "Hermes.DBHelper";
 
     private static final String DATABASE_NAME = "hermes.db";
     private static final int DATABASE_VERSION = 2;
@@ -76,6 +76,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         Log.d(TAG, "onCreate()");
         db.execSQL(MESSAGE_DATABASE_CREATE);
+        db.execSQL(CONTACT_DATABASE_CREATE);
     }
 
     @Override
@@ -87,6 +88,7 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.d(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACT);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGE);
         onCreate(db);
     }

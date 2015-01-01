@@ -39,7 +39,7 @@ import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_PU
 import static com.alangeorge.android.hermes.model.provider.HermesContentProvider.CONTACTS_CONTENT_URI;
 
 public class ContactListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
-    private static final String TAG = "ContactListFragment";
+    private static final String TAG = "Hermes.ContactListFragment";
 
     private SimpleCursorAdapter adapter;
 
@@ -234,7 +234,7 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
 
     private static class ContactCursorAdapter extends SimpleCursorAdapter {
         @SuppressWarnings("UnusedDeclaration")
-        private static final String TAG = "ContactCursorAdapter";
+        private static final String TAG = "Hermes.ContactCursorAdapter";
 
         public ContactCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to, int flags) {
             super(context, layout, c, from, to, flags);
