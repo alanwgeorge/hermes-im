@@ -24,7 +24,7 @@ import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_CONTACT;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_MESSAGE;
 
 public class HermesContentProvider extends ContentProvider {
-    private static final String TAG = "HermesContentProvider";
+    private static final String TAG = "Hermes.HermesContentProvider";
 
     // used for the UriMatcher
     private static final int CONTACTS = 10;

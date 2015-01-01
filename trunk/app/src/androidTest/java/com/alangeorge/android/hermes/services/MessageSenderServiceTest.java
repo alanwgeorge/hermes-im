@@ -17,7 +17,7 @@ import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SE
 import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_SUCCESS;
 
 public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderService> {
-    private static final String TAG = "MessageSenderServiceTest";
+    private static final String TAG = "Hermes.MessageSenderServiceTest";
     private Messenger contactDetailFragmentMessenger = new Messenger(new MessageSenderServiceInboundMessageHandler());
     private boolean didMessageStatusMessageArrive = false;
     private boolean didMessageSuccess = false;

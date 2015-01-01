@@ -1,4 +1,4 @@
-package com.alangeorge.android.hermes;
+package com.alangeorge.android.hermes.services;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -7,8 +7,7 @@ import android.content.Intent;
 import android.support.v4.content.WakefulBroadcastReceiver;
 
 public class GcmBroadcastReceiver extends WakefulBroadcastReceiver {
-    public GcmBroadcastReceiver() {
-    }
+    public GcmBroadcastReceiver() { }
 
     @Override
     public void onReceive(Context context, Intent intent) {

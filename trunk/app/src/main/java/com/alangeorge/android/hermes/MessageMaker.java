@@ -19,7 +19,7 @@ import static com.alangeorge.android.hermes.App.DEFAULT_RSA_CIPHER;
 import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
 
 public class MessageMaker {
-    private static final String TAG = "MessageMaker";
+    private static final String TAG = "Hermes.MessageMaker";
 
     /**
      * Constructs a {@link com.alangeorge.android.hermes.model.Message} that is ready to be sent
@@ -36,7 +36,7 @@ public class MessageMaker {
         Message.Body body = new Message.Body();
 
         body.setGcmRegistrationId(fromGcmId);
-        body.setPublicKey(Base64.encodeToString(fromKeyPair.getPublic().getEncoded(), Base64.NO_WRAP));
+        body.setSenderPublicKey(Base64.encodeToString(fromKeyPair.getPublic().getEncoded(), Base64.NO_WRAP));
 
         SecretKeySpec symmetricKey = generateSymmetricKey();
 

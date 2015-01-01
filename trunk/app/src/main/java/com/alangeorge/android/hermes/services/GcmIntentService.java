@@ -1,4 +1,4 @@
-package com.alangeorge.android.hermes;
+package com.alangeorge.android.hermes.services;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -9,21 +9,24 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.alangeorge.android.hermes.MainActivity;
+import com.alangeorge.android.hermes.R;
+import com.alangeorge.android.hermes.model.Message;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 import java.util.Set;
 
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
-    private static final String TAG = "GcmIntentService";
+    private static final String TAG = "Hermes.GcmIntentService";
 
     public GcmIntentService() {
-        super("GemIntentService");
-
+        super(TAG);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "onHandleIntent(" + intent + ")");
         Bundle extras = intent.getExtras();
         GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
         // The getMessageType() intent parameter must be the intent you received
@@ -31,29 +34,41 @@ public class GcmIntentService extends IntentService {
         String messageType = gcm.getMessageType(intent);
 
         if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
-            /*
-             * Filter messages based on message type. Since it is likely that GCM will be
-             * extended in the future with new message types, just ignore any message types you're
-             * not interested in, or that you don't recognize.
-             */
-            if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
-                sendNotification(this, "Send error: " + extras.toString());
-            } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
-                sendNotification(this, "Deleted messages on server: " + extras.toString());
-                // If it's a regular GCM message, do some work.
-            } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
-                // Post notification of received message.
+            switch (messageType) {
+                case GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR:
+                    sendNotification(this, "Send error: " + extras.toString());
+                    break;
+                case GoogleCloudMessaging.MESSAGE_TYPE_DELETED:
+                    sendNotification(this, "Deleted messages on server: " + extras.toString());
+                    // If it's a regular GCM message, do some work.
+                    break;
+                case GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE:
+                    // Post notification of received message.
 
-                Set<String> bundleKeys = extras.keySet();
-                for (String key : bundleKeys) {
-                    Log.d(TAG, "intent bundle key:value " + key + ":" + extras.get(key).toString());
-                }
+                    Set<String> bundleKeys = extras.keySet();
+                    for (String key : bundleKeys) {
+                        Log.d(TAG, "intent bundle key:value " + key + ":" + extras.get(key).toString());
+                    }
 
-                sendNotification(this, "Received: " + extras.toString());
+                    String hermesMessageJson = extras.getString(getResources().getString(R.string.gcm_message_field_message), null);
 
-                Log.i(TAG, "Received: " + extras.toString());
+                    if (hermesMessageJson == null || "".equals(hermesMessageJson)) {
+                        Log.e(TAG, "relieved PN with no hermes message");
+                        break;
+                    }
+
+                    Message message = new Message(hermesMessageJson);
+
+                    if (! message.verifySignature()) {
+                        Log.e(TAG, "message failed signature verification");
+                    }
+                    break;
+                default:
+                    Log.e(TAG, "unknown GCM message type: " + messageType);
+                    break;
             }
         }
+
         // Release the wake lock provided by the WakefulBroadcastReceiver.
         GcmBroadcastReceiver.completeWakefulIntent(intent);
     }
