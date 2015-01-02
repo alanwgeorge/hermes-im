@@ -11,6 +11,7 @@ import android.util.Log;
 import com.alangeorge.android.hermes.App;
 
 import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_GCM_ID;
+import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_MESSAGE_EXTRA_NAME;
 import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_MESSAGE_TEXT;
 import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_FAILED;
 import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_MESSAGE;
@@ -18,7 +19,9 @@ import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SE
 
 public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderService> {
     private static final String TAG = "Hermes.MessageSenderServiceTest";
-    private Messenger contactDetailFragmentMessenger = new Messenger(new MessageSenderServiceInboundMessageHandler());
+
+    // Service will send message send status to this messenger
+    private Messenger messageSenderServiceTestMessenger = new Messenger(new MessageSenderServiceInboundMessageHandler());
     private boolean didMessageStatusMessageArrive = false;
     private boolean didMessageSuccess = false;
     private final Object waitLock = new Object();
@@ -42,8 +45,10 @@ public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderServi
 
         android.os.Message serviceMessage = android.os.Message.obtain(null, MSG_SEND_MESSAGE);
         serviceMessage.getData().putString(ARG_MESSAGE_TEXT, "HelloWorld");
+        serviceMessage.getData().putString(ARG_MESSAGE_EXTRA_NAME, "message");
         serviceMessage.getData().putString(ARG_GCM_ID, App.getGcmRegistrationId());
-        serviceMessage.replyTo = contactDetailFragmentMessenger;
+        // message sent status will be sent to this messenger
+        serviceMessage.replyTo = messageSenderServiceTestMessenger;
         try {
             messageSenderServiceMessenger.send(serviceMessage);
         } catch (RemoteException e) {
@@ -51,7 +56,7 @@ public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderServi
             fail("error communicating with MessageSenderService");
         }
 
-        Log.d(TAG, "waiting 5 seconds for message send status to arrive");
+        Log.d(TAG, "wait()ing thread for up to 5 seconds for message send status to arrive");
         long startWait = 0;
         long endWait = 0;
         synchronized (waitLock) {
@@ -77,9 +82,6 @@ public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderServi
                 case MSG_SEND_SUCCESS:
                     Log.d(TAG, "Message send success");
                     didMessageSuccess = true;
-                    synchronized (waitLock) {
-                        waitLock.notifyAll();
-                    }
                     break;
                 case MSG_SEND_FAILED:
                     Log.e(TAG, "Message send failed");
@@ -87,6 +89,10 @@ public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderServi
                 default:
                     Log.d(TAG, "unknown message : " + msg.what);
                     super.handleMessage(msg);
+            }
+            // notify waiting thread to resume
+            synchronized (waitLock) {
+                waitLock.notifyAll();
             }
         }
     }

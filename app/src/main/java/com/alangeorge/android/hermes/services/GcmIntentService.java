@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.alangeorge.android.hermes.MainActivity;
@@ -19,6 +20,11 @@ import java.util.Set;
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
     private static final String TAG = "Hermes.GcmIntentService";
+    public static final String ACTION_INCOMING_MESSAGE_STATUS = "action_incoming_message_status";
+    public static final String ARG_INCOMING_MESSAGE_STATUS = "arg_incoming_message_status";
+    public static final int INCOMING_MESSAGE_SUCCESSFUL = 0;
+    public static final int INCOMING_MESSAGE_ERROR_NO_HERMES_MESSAGE_FOUND = 1;
+    public static final int INCOMING_MESSAGE_ERROR_FAILED_SIGNATURE_VERIFY = 2;
 
     public GcmIntentService() {
         super(TAG);
@@ -29,10 +35,10 @@ public class GcmIntentService extends IntentService {
         Log.d(TAG, "onHandleIntent(" + intent + ")");
         Bundle extras = intent.getExtras();
         GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
-        // The getMessageType() intent parameter must be the intent you received
-        // in your BroadcastReceiver.
-        String messageType = gcm.getMessageType(intent);
 
+        Intent statusBroadcastIntent = new Intent(ACTION_INCOMING_MESSAGE_STATUS);
+
+        String messageType = gcm.getMessageType(intent);
         if (extras != null && !extras.isEmpty()) {  // has effect of unparcelling Bundle
             switch (messageType) {
                 case GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR:
@@ -53,7 +59,8 @@ public class GcmIntentService extends IntentService {
                     String hermesMessageJson = extras.getString(getResources().getString(R.string.gcm_message_field_message), null);
 
                     if (hermesMessageJson == null || "".equals(hermesMessageJson)) {
-                        Log.e(TAG, "relieved PN with no hermes message");
+                        Log.e(TAG, "received PN with no hermes message");
+                        statusBroadcastIntent.putExtra(ARG_INCOMING_MESSAGE_STATUS, INCOMING_MESSAGE_ERROR_NO_HERMES_MESSAGE_FOUND);
                         break;
                     }
 
@@ -61,12 +68,17 @@ public class GcmIntentService extends IntentService {
 
                     if (! message.verifySignature()) {
                         Log.e(TAG, "message failed signature verification");
+                        statusBroadcastIntent.putExtra(ARG_INCOMING_MESSAGE_STATUS, INCOMING_MESSAGE_ERROR_FAILED_SIGNATURE_VERIFY);
+                        break;
                     }
+                    statusBroadcastIntent.putExtra(ARG_INCOMING_MESSAGE_STATUS, INCOMING_MESSAGE_SUCCESSFUL);
                     break;
                 default:
                     Log.e(TAG, "unknown GCM message type: " + messageType);
                     break;
             }
+
+            LocalBroadcastManager.getInstance(this).sendBroadcast(statusBroadcastIntent);
         }
 
         // Release the wake lock provided by the WakefulBroadcastReceiver.
