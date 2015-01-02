@@ -26,11 +26,13 @@ public class MessageSenderService extends Service {
     public static final int MSG_SEND_SUCCESS = 1;
     public static final int MSG_SEND_FAILED = 2;
     public static final String ARG_MESSAGE_TEXT = "arg_message_text";
+    public static final String ARG_MESSAGE_EXTRA_NAME = "arg_message_extra_name";
     public static final String ARG_GCM_ID = "arg_gcm_id";
     public static final String ARG_ERROR_TEXT = "arg_error_text";
 
     private Messenger serviceMessenger;
     private boolean isRunning = false;
+
 
     public MessageSenderService() { }
 
@@ -57,12 +59,16 @@ public class MessageSenderService extends Service {
         return serviceMessenger.getBinder();
     }
 
-    private Result sendGcmMessage(String messageText, String gcmId) throws IOException {
+    private Result sendGcmMessage(String messageText, String messageExtraName, String gcmId) throws IOException {
         Log.d(TAG, "sendGcmMessage()");
 
         Sender sender = new Sender(App.context.getResources().getString(R.string.gcm_sender_key));
         com.google.android.gcm.server.Message.Builder builder = new com.google.android.gcm.server.Message.Builder();
-        builder.addData(App.context.getString(R.string.gcm_message_field_message), messageText);
+        if (messageExtraName == null) {
+            builder.addData(getString(R.string.gcm_message_field_message), messageText);
+        } else {
+            builder.addData(messageExtraName, messageText);
+        }
         com.google.android.gcm.server.Message message = builder.build();
         Result result = sender.send(message, gcmId, 5);
 
@@ -85,6 +91,7 @@ public class MessageSenderService extends Service {
         public void handleMessage(final Message message) {
             switch (message.what) {
                 case MSG_SEND_MESSAGE:
+                    final String messageExtraName = message.getData().getString(ARG_MESSAGE_EXTRA_NAME, null);
                     final String messageText = message.getData().getString(ARG_MESSAGE_TEXT, null);
                     final String gcmId = message.getData().getString(ARG_GCM_ID, null);
                     String errorText = null;
@@ -112,7 +119,7 @@ public class MessageSenderService extends Service {
                     Message reply = Message.obtain(null, MSG_SEND_SUCCESS);
                     Result result = null;
                     try {
-                        result = sendGcmMessage(messageText, gcmId);
+                        result = sendGcmMessage(messageText, messageExtraName, gcmId);
                     } catch (IOException e) {
                         Log.e(TAG, "failed to send GCM message: IOException", e);
                         reply = Message.obtain(null, MSG_SEND_FAILED);
