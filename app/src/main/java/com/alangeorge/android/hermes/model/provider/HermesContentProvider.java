@@ -18,7 +18,9 @@ import java.util.HashSet;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_CREATE_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_ID;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_ALL_COLUMNS;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_CREATE_TIME;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_ID;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_READ_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_CONTACT;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_MESSAGE;
@@ -31,6 +33,7 @@ public class HermesContentProvider extends ContentProvider {
     private static final int CONTACT_ID = 20;
     private static final int MESSAGES = 30;
     private static final int MESSAGE_ID = 40;
+    private static final int MESSAGES_BY_CONTACT_PRIVATE_KEY = 50;
 
     private static final String CONTACTS_PATH = "contacts";
     private static final String MESSAGES_PATH = "messages";
@@ -45,11 +48,19 @@ public class HermesContentProvider extends ContentProvider {
         sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH + "/#", CONTACT_ID);
         sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH, MESSAGES);
         sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH + "/#", MESSAGE_ID);
+        sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH + "/findby/contact/privatekey/*", MESSAGES_BY_CONTACT_PRIVATE_KEY);
     }
 
     private DBHelper dbHelper;
 
     public HermesContentProvider() { }
+
+    @Override
+    public boolean onCreate() {
+        Log.d(TAG, "onCreate()");
+        dbHelper = new DBHelper(getContext());
+        return true;
+    }
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
@@ -91,13 +102,6 @@ public class HermesContentProvider extends ContentProvider {
     }
 
     @Override
-    public boolean onCreate() {
-        Log.d(TAG, "onCreate()");
-        dbHelper = new DBHelper(getContext());
-        return true;
-    }
-
-    @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         Cursor cursor;
@@ -113,6 +117,17 @@ public class HermesContentProvider extends ContentProvider {
                 queryBuilder.setTables(TABLE_CONTACT);
                 db = dbHelper.getWritableDatabase();
                 break;
+            case MESSAGE_ID:
+                // adding the ID to the original query
+                queryBuilder.appendWhere(MESSAGE_COLUMN_ID + "=" + uri.getLastPathSegment());
+            case MESSAGES:
+                checkColumnsMessage(projection);
+                queryBuilder.setTables(TABLE_MESSAGE);
+                db = dbHelper.getWritableDatabase();
+                break;
+//            case MESSAGES_BY_CONTACT_PRIVATE_KEY:
+//                queryBuilder.appendWhere(MES);
+//                checkColumnsMessage(projection);
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);
         }
@@ -133,6 +148,17 @@ public class HermesContentProvider extends ContentProvider {
         if (projection != null) {
             HashSet<String> requestedColumns = new HashSet<>(Arrays.asList(projection));
             HashSet<String> availableColumns = new HashSet<>(Arrays.asList(CONTACT_ALL_COLUMNS));
+            // check if all columns which are requested are available
+            if (!availableColumns.containsAll(requestedColumns)) {
+                throw new IllegalArgumentException("Unknown columns in projection");
+            }
+        }
+    }
+
+    private void checkColumnsMessage(String[] projection) {
+        if (projection != null) {
+            HashSet<String> requestedColumns = new HashSet<>(Arrays.asList(projection));
+            HashSet<String> availableColumns = new HashSet<>(Arrays.asList(MESSAGE_ALL_COLUMNS));
             // check if all columns which are requested are available
             if (!availableColumns.containsAll(requestedColumns)) {
                 throw new IllegalArgumentException("Unknown columns in projection");
