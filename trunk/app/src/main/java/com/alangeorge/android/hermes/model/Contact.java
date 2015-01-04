@@ -148,9 +148,18 @@ public class Contact {
      * Takes a {@link android.database.Cursor} and converts it to a model object, {@link com.alangeorge.android.hermes.model.Contact}
      *
      * @param cursor the {@link android.database.Cursor} to convert
-     * @return the resulting {@link com.alangeorge.android.hermes.model.Contact}
+     * @return the resulting {@link com.alangeorge.android.hermes.model.Contact}, null if Cursor is empty
      */
     public static Contact cursorToContact(Cursor cursor) {
+        if (cursor == null || cursor.getCount() == 0) {
+            Log.e(TAG, "cursor null or empty");
+            return null;
+        }
+
+        if (cursor.isBeforeFirst()) {
+            cursor.moveToFirst();
+        }
+
         Contact contact = new Contact();
 
         contact.setId(cursor.getLong(0));
