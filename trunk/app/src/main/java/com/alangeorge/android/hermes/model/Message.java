@@ -1,18 +1,25 @@
 package com.alangeorge.android.hermes.model;
 
+import android.database.Cursor;
+import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
 
+import com.alangeorge.android.hermes.model.provider.HermesContentProvider;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
 import java.security.PrivateKey;
 import java.security.Signature;
+import java.util.Date;
 
 import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
 import static com.alangeorge.android.hermes.App.DEFAULT_SIGNATURE_ALGORITHM;
+import static com.alangeorge.android.hermes.App.context;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_ALL_COLUMNS;
 
+@SuppressWarnings("UnusedDeclaration")
 public class Message {
     private static final String TAG = "Hermes.Message";
 
@@ -23,10 +30,21 @@ public class Message {
     @Expose
     private Body body;
 
+    private long id;
+    private long contactId;
+    private Date createTime;
+    private Date readTime;
+
     public Message() {
         GsonBuilder builder = new GsonBuilder();
         builder.excludeFieldsWithoutExposeAnnotation();
         gson = builder.create();
+    }
+
+    public Message(long id) throws ModelException {
+        this();
+        Uri uri = Uri.parse(HermesContentProvider.MESSAGES_CONTENT_URI + "/" + id);
+        load(uri);
     }
 
     public Message(String json) {
@@ -34,6 +52,11 @@ public class Message {
         Message temp = gson.fromJson(json, getClass());
         this.setBody(temp.getBody());
         this.setSignature(temp.getSignature());
+    }
+
+    public Message(Uri messageUri) throws ModelException {
+        this();
+        load(messageUri);
     }
 
     public String getSignature() {
@@ -50,6 +73,38 @@ public class Message {
 
     public void setBody(Body body) {
         this.body = body;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getContactId() {
+        return contactId;
+    }
+
+    public void setContactId(long contactId) {
+        this.contactId = contactId;
+    }
+
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+
+    public Date getReadTime() {
+        return readTime;
+    }
+
+    public void setReadTime(Date readTime) {
+        this.readTime = readTime;
     }
 
     public void sign(PrivateKey senderPrivateKey) {
@@ -116,6 +171,53 @@ public class Message {
 
     public String toJson() {
         return gson.toJson(this);
+    }
+
+    private void load(Uri uri) throws ModelException {
+        Cursor cursor = context.getContentResolver().query(
+                uri,
+                MESSAGE_ALL_COLUMNS,
+                null,
+                null,
+                null
+        );
+        cursor.moveToFirst();
+        load(cursor, true);
+    }
+
+    private void load(Cursor cursor, boolean closeCursor) throws ModelException {
+        if (cursor != null && cursor.getCount() > 0) {
+            setId(cursor.getLong(0));
+            setContactId(cursor.getLong(1));
+            Message temp = new Message(cursor.getString(2));
+            setSignature(temp.getSignature());
+            setBody(temp.getBody());
+            setReadTime(new Date(cursor.getLong(3)));
+            setCreateTime(new Date(cursor.getLong(4)));
+            if (closeCursor) cursor.close();
+        } else {
+            throw new ModelException("unable to load: cursor null or count is 0");
+        }
+    }
+
+    public static Message cursorToMessage(Cursor cursor) {
+        if (cursor == null || cursor.getCount() == 0) {
+            Log.e(TAG, "cursor null or empty");
+            return null;
+        }
+
+        if (cursor.isBeforeFirst()) {
+            cursor.moveToFirst();
+        }
+
+        Message message = new Message(cursor.getString(2));
+
+        message.setId(cursor.getLong(0));
+        message.setContactId(cursor.getLong(1));
+        message.setReadTime(new Date(cursor.getLong(3)));
+        message.setCreateTime(new Date(cursor.getLong(4)));
+
+        return message;
     }
 
     public static class Body {

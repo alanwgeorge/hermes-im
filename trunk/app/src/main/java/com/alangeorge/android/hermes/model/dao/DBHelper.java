@@ -23,7 +23,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String TAG = "Hermes.DBHelper";
 
     private static final String DATABASE_NAME = "hermes.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     // contact Table
     public static final String TABLE_CONTACT = "contact";
@@ -50,7 +50,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String TABLE_MESSAGE = "message";
     public static final String MESSAGE_COLUMN_ID = "_id";
     public static final String MESSAGE_COLUMN_CONTACT_ID = "contact_id";
-    public static final String MESSAGE_COLUMN_MESSAGE_TEXT = "message_text";
+    public static final String MESSAGE_COLUMN_MESSAGE_JSON = "message_json";
     public static final String MESSAGE_COLUMN_READ_TIME = "read_time"; // -1 == not yet read
     public static final String MESSAGE_COLUMN_CREATE_TIME = "createtime";
 
@@ -58,13 +58,13 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String[] MESSAGE_ALL_COLUMNS = {
             MESSAGE_COLUMN_ID,
             MESSAGE_COLUMN_CONTACT_ID,
-            MESSAGE_COLUMN_MESSAGE_TEXT,
+            MESSAGE_COLUMN_MESSAGE_JSON,
             MESSAGE_COLUMN_READ_TIME,
             MESSAGE_COLUMN_CREATE_TIME
     };
 
     public static final String MESSAGE_DATABASE_CREATE = "create table " + TABLE_MESSAGE + " (" + MESSAGE_COLUMN_ID
-            + " integer primary key autoincrement, " + MESSAGE_COLUMN_CONTACT_ID + " integer not null, " + MESSAGE_COLUMN_MESSAGE_TEXT
+            + " integer primary key autoincrement, " + MESSAGE_COLUMN_CONTACT_ID + " integer not null, " + MESSAGE_COLUMN_MESSAGE_JSON
             + " text not null, " + MESSAGE_COLUMN_READ_TIME + " integer, " + MESSAGE_COLUMN_CREATE_TIME + " integer not null, foreign key("
             + MESSAGE_COLUMN_CONTACT_ID + ") references " + TABLE_CONTACT + "(" + CONTACT_COLUMN_ID + "));";
 
