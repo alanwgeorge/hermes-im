@@ -91,5 +91,12 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACT);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGE);
         onCreate(db);
+
+        if (newVersion == 0) {  // special case for test cases, creates fresh DB
+            Log.d(TAG, "dropping and recreating database tables, newVersion is 0...");
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACT);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGE);
+            onCreate(db);
+        }
     }
 }
