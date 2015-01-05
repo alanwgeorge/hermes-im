@@ -68,6 +68,10 @@ public class DBHelper extends SQLiteOpenHelper {
             + " text not null, " + MESSAGE_COLUMN_READ_TIME + " integer, " + MESSAGE_COLUMN_CREATE_TIME + " integer not null, foreign key("
             + MESSAGE_COLUMN_CONTACT_ID + ") references " + TABLE_CONTACT + "(" + CONTACT_COLUMN_ID + "));";
 
+    @SuppressWarnings("UnusedDeclaration")
+    public static final String TABLE_JOIN_MESSAGE_CONTACT = TABLE_MESSAGE + " message INNER JOIN " + TABLE_CONTACT + " contact ON (message."
+            + MESSAGE_COLUMN_CONTACT_ID + " = contact." + CONTACT_COLUMN_ID;
+
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -83,6 +87,10 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onOpen(SQLiteDatabase db) {
         Log.d(TAG, "onOpen()");
         super.onOpen(db);
+        if (!db.isReadOnly()) {
+            // Enable foreign key constraints
+            db.execSQL("PRAGMA foreign_keys = ON;");
+        }
     }
 
     @Override
