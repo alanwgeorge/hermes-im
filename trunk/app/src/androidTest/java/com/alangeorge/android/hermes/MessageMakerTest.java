@@ -48,7 +48,7 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
         ContextThemeWrapper context = new ContextThemeWrapper(getInstrumentation().getTargetContext(), R.style.AppTheme);
         setActivityContext(context);
 
-        // onCreate() should register for us GCM
+        // onCreate() should register for us GCM, must be on device/emulator with google play services
         startActivity(new Intent(getInstrumentation().getTargetContext(), MainActivity.class), null, null);
 
         gcmId = getGcmRegistrationId();
