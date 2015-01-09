@@ -22,7 +22,9 @@ import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_ALL_COLUM
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_CREATE_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_ID;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_READ_TIME;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_CONTACT_ALL_COLUMNS;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_CONTACT;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_JOIN_MESSAGE_CONTACT;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.TABLE_MESSAGE;
 
 public class HermesContentProvider extends ContentProvider {
@@ -33,14 +35,18 @@ public class HermesContentProvider extends ContentProvider {
     private static final int CONTACT_ID = 20;
     private static final int MESSAGES = 30;
     private static final int MESSAGE_ID = 40;
-    private static final int MESSAGES_BY_CONTACT_PRIVATE_KEY = 50;
+    private static final int MESSAGES_CONTACT = 50;
+    private static final int MESSAGES_CONTACT_ID = 60;
+    private static final int MESSAGES_CONTACT_BY_CONTACT_PRIVATE_KEY = 70;
 
     private static final String CONTACTS_PATH = "contacts";
     private static final String MESSAGES_PATH = "messages";
+    private static final String MESSAGES_CONTACT_JOIN_PATH = "messagescontact";
 
     public static final String AUTHORITY = "com.alangeorge.android.hermes.contentprovider";
     public static final Uri CONTACTS_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH);
     public static final Uri MESSAGES_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + MESSAGES_PATH);
+    public static final Uri MESSAGES_CONTACT_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + MESSAGES_CONTACT_JOIN_PATH);
 
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
     static {
@@ -48,7 +54,9 @@ public class HermesContentProvider extends ContentProvider {
         sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH + "/#", CONTACT_ID);
         sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH, MESSAGES);
         sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH + "/#", MESSAGE_ID);
-        sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH + "/findby/contact/privatekey/*", MESSAGES_BY_CONTACT_PRIVATE_KEY);
+        sURIMatcher.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH, MESSAGES_CONTACT);
+        sURIMatcher.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH + "/#", MESSAGES_CONTACT_ID);
+        sURIMatcher.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH + "/findby/contact/privatekey/*", MESSAGES_CONTACT_BY_CONTACT_PRIVATE_KEY);
     }
 
     private DBHelper dbHelper;
@@ -125,7 +133,16 @@ public class HermesContentProvider extends ContentProvider {
                 queryBuilder.setTables(TABLE_MESSAGE);
                 db = dbHelper.getWritableDatabase();
                 break;
-//            case MESSAGES_BY_CONTACT_PRIVATE_KEY:
+            case MESSAGES_CONTACT_ID:
+                // adding the ID to the original query
+                queryBuilder.appendWhere(MESSAGE_COLUMN_ID + "=" + uri.getLastPathSegment());
+            case MESSAGES_CONTACT:
+                checkColumnsMessagesContactJoin(MESSAGE_CONTACT_ALL_COLUMNS);
+                queryBuilder.setTables(TABLE_JOIN_MESSAGE_CONTACT);
+//                queryBuilder.setProjectionMap(MESSAGE_CONTACT_JOIN_PROJECTION_MAP);
+                db = dbHelper.getWritableDatabase();
+                break;
+//            case MESSAGES_CONTACT_BY_CONTACT_PRIVATE_KEY:
 //                queryBuilder.appendWhere(MES);
 //                checkColumnsMessage(projection);
             default:
@@ -166,4 +183,14 @@ public class HermesContentProvider extends ContentProvider {
         }
     }
 
+    private void checkColumnsMessagesContactJoin(String[] projection) {
+        if (projection != null) {
+            HashSet<String> requestedColumns = new HashSet<>(Arrays.asList(projection));
+            HashSet<String> availableColumns = new HashSet<>(Arrays.asList(MESSAGE_CONTACT_ALL_COLUMNS));
+            // check if all columns which are requested are available
+            if (!availableColumns.containsAll(requestedColumns)) {
+                throw new IllegalArgumentException("Unknown columns in projection");
+            }
+        }
+    }
 }

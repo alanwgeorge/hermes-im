@@ -5,6 +5,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  *
  * Below are example commands (OSX) to access the database of a device with BloodHound installed
@@ -42,12 +45,13 @@ public class DBHelper extends SQLiteOpenHelper {
     };
 
     @SuppressWarnings("UnusedDeclaration")
-    public static final String CONTACT_DATABASE_CREATE = "create table " + TABLE_CONTACT + " (" + CONTACT_COLUMN_ID
+    public static final String CONTACT_TABLE_CREATE = "create table " + TABLE_CONTACT + " (" + CONTACT_COLUMN_ID
             + " integer primary key autoincrement, " + CONTACT_COLUMN_NAME + " text not null, " + CONTACT_COLUMN_PUBLIC_KEY
             + " text not null, " + CONTACT_COLUMN_GCM_ID + " text not null, " + CONTACT_COLUMN_CREATE_TIME + " integer not null);";
 
     // message Table
     public static final String TABLE_MESSAGE = "message";
+    public static final String INDEX_MESSAGE_CONTACT_ID = "contact_id_index";
     public static final String MESSAGE_COLUMN_ID = "_id";
     public static final String MESSAGE_COLUMN_CONTACT_ID = "contact_id";
     public static final String MESSAGE_COLUMN_MESSAGE_JSON = "message_json";
@@ -63,14 +67,48 @@ public class DBHelper extends SQLiteOpenHelper {
             MESSAGE_COLUMN_CREATE_TIME
     };
 
-    public static final String MESSAGE_DATABASE_CREATE = "create table " + TABLE_MESSAGE + " (" + MESSAGE_COLUMN_ID
+    public static final String MESSAGE_TABLE_CREATE = "create table " + TABLE_MESSAGE + " (" + MESSAGE_COLUMN_ID
             + " integer primary key autoincrement, " + MESSAGE_COLUMN_CONTACT_ID + " integer not null, " + MESSAGE_COLUMN_MESSAGE_JSON
             + " text not null, " + MESSAGE_COLUMN_READ_TIME + " integer, " + MESSAGE_COLUMN_CREATE_TIME + " integer not null, foreign key("
             + MESSAGE_COLUMN_CONTACT_ID + ") references " + TABLE_CONTACT + "(" + CONTACT_COLUMN_ID + "));";
 
+    public static final String MESSAGE_INDEX_CONTACT_ID_CREATE = "create index " + INDEX_MESSAGE_CONTACT_ID + " on " + TABLE_MESSAGE + "(" + MESSAGE_COLUMN_CONTACT_ID + ");";
+
+    // message/contact join
+    public static final String MESSAGE_PREFIX = TABLE_MESSAGE;
+    public static final String CONTACT_PREFIX = TABLE_CONTACT;
     @SuppressWarnings("UnusedDeclaration")
-    public static final String TABLE_JOIN_MESSAGE_CONTACT = TABLE_MESSAGE + " message INNER JOIN " + TABLE_CONTACT + " contact ON (message."
-            + MESSAGE_COLUMN_CONTACT_ID + " = contact." + CONTACT_COLUMN_ID;
+    public static final String TABLE_JOIN_MESSAGE_CONTACT = TABLE_MESSAGE + " " + MESSAGE_PREFIX + " INNER JOIN "
+            + TABLE_CONTACT + " " + CONTACT_PREFIX + " ON (" + MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CONTACT_ID
+            + " = " + CONTACT_PREFIX + "." + CONTACT_COLUMN_ID + ")";
+
+    public static final Map<String, String > MESSAGE_CONTACT_JOIN_PROJECTION_MAP;
+    static {
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP = new HashMap<>();
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_PREFIX + "." + MESSAGE_COLUMN_ID, MESSAGE_COLUMN_ID);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CONTACT_ID, MESSAGE_COLUMN_CONTACT_ID);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_PREFIX + "." + MESSAGE_COLUMN_MESSAGE_JSON, MESSAGE_COLUMN_MESSAGE_JSON);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_PREFIX + "." + MESSAGE_COLUMN_READ_TIME, MESSAGE_COLUMN_READ_TIME);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CREATE_TIME, MESSAGE_COLUMN_CREATE_TIME);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(CONTACT_PREFIX + "." + CONTACT_COLUMN_ID, CONTACT_PREFIX + CONTACT_COLUMN_ID);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(CONTACT_PREFIX + "." + CONTACT_COLUMN_NAME, CONTACT_PREFIX + "_" + CONTACT_COLUMN_NAME);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(CONTACT_PREFIX + "." + CONTACT_COLUMN_PUBLIC_KEY, CONTACT_PREFIX + "_" + CONTACT_COLUMN_PUBLIC_KEY);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(CONTACT_PREFIX + "." + CONTACT_COLUMN_GCM_ID, CONTACT_PREFIX + "_" + CONTACT_COLUMN_GCM_ID);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(CONTACT_PREFIX + "." + CONTACT_COLUMN_CREATE_TIME, CONTACT_PREFIX + "_" + CONTACT_COLUMN_CREATE_TIME);
+    }
+
+    public static final String[] MESSAGE_CONTACT_ALL_COLUMNS = {
+            MESSAGE_PREFIX + "." + MESSAGE_COLUMN_ID,
+            MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CONTACT_ID,
+            MESSAGE_PREFIX + "." + MESSAGE_COLUMN_MESSAGE_JSON,
+            MESSAGE_PREFIX + "." + MESSAGE_COLUMN_READ_TIME,
+            MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CREATE_TIME,
+            CONTACT_PREFIX + "." + CONTACT_COLUMN_ID,
+            CONTACT_PREFIX + "." + CONTACT_COLUMN_NAME,
+            CONTACT_PREFIX + "." + CONTACT_COLUMN_PUBLIC_KEY,
+            CONTACT_PREFIX + "." + CONTACT_COLUMN_GCM_ID,
+            CONTACT_PREFIX + "." + CONTACT_COLUMN_CREATE_TIME
+    };
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -79,8 +117,9 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         Log.d(TAG, "onCreate()");
-        db.execSQL(MESSAGE_DATABASE_CREATE);
-        db.execSQL(CONTACT_DATABASE_CREATE);
+        db.execSQL(CONTACT_TABLE_CREATE);
+        db.execSQL(MESSAGE_TABLE_CREATE);
+        db.execSQL(MESSAGE_INDEX_CONTACT_ID_CREATE);
     }
 
     @Override
@@ -96,12 +135,15 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Log.d(TAG, "Upgrading database from version " + oldVersion + " to " + newVersion);
+        db.execSQL("PRAGMA foreign_keys = OFF;");
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACT);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGE);
+        db.execSQL("DROP INDEX IF EXISTS " + INDEX_MESSAGE_CONTACT_ID);
         onCreate(db);
 
         if (newVersion == 0) {  // special case for test cases, creates fresh DB
             Log.d(TAG, "dropping and recreating database tables, newVersion is 0...");
+            db.execSQL("PRAGMA foreign_keys = OFF;");
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_CONTACT);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_MESSAGE);
             onCreate(db);

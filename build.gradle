@@ -2,6 +2,7 @@
 
 buildscript {
     repositories {
+        maven { url 'http://sf1-8yoohoo-ixb-mb.wellsfargo.com:9090/archiva/repository/internal/' }
         mavenCentral()
     }
     dependencies {
@@ -11,6 +12,7 @@ buildscript {
 
 allprojects {
     repositories {
+        maven { url 'http://sf1-8yoohoo-ixb-mb.wellsfargo.com:9090/archiva/repository/internal/' }
         mavenCentral()
         maven {
             url "https://raw.github.com/embarkmobile/zxing-android-minimal/mvn-repo/maven-repository/"
