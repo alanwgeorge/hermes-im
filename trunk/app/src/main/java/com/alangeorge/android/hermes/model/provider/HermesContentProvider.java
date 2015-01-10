@@ -19,6 +19,7 @@ import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUM
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_CREATE_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_ID;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_ALL_COLUMNS;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_CONTACT_ID;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_CREATE_TIME;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_ID;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_COLUMN_READ_TIME;
@@ -31,13 +32,13 @@ public class HermesContentProvider extends ContentProvider {
     private static final String TAG = "Hermes.HermesContentProvider";
 
     // used for the UriMatcher
-    private static final int CONTACTS = 10;
-    private static final int CONTACT_ID = 20;
-    private static final int MESSAGES = 30;
-    private static final int MESSAGE_ID = 40;
-    private static final int MESSAGES_CONTACT = 50;
-    private static final int MESSAGES_CONTACT_ID = 60;
-    private static final int MESSAGES_CONTACT_BY_CONTACT_PRIVATE_KEY = 70;
+    public static final int CONTACTS = 10;
+    public static final int CONTACT_ID = 20;
+    public static final int MESSAGES = 30;
+    public static final int MESSAGE_ID = 40;
+    public static final int MESSAGES_CONTACT = 50;
+    public static final int MESSAGES_CONTACT_ID = 60;
+    public static final int MESSAGES_CONTACT_BY_CONTACT_PRIVATE_KEY = 70;
 
     private static final String CONTACTS_PATH = "contacts";
     private static final String MESSAGES_PATH = "messages";
@@ -48,15 +49,15 @@ public class HermesContentProvider extends ContentProvider {
     public static final Uri MESSAGES_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + MESSAGES_PATH);
     public static final Uri MESSAGES_CONTACT_CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + MESSAGES_CONTACT_JOIN_PATH);
 
-    private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+    public static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
     static {
-        sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH, CONTACTS);
-        sURIMatcher.addURI(AUTHORITY, CONTACTS_PATH + "/#", CONTACT_ID);
-        sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH, MESSAGES);
-        sURIMatcher.addURI(AUTHORITY, MESSAGES_PATH + "/#", MESSAGE_ID);
-        sURIMatcher.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH, MESSAGES_CONTACT);
-        sURIMatcher.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH + "/#", MESSAGES_CONTACT_ID);
-        sURIMatcher.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH + "/findby/contact/privatekey/*", MESSAGES_CONTACT_BY_CONTACT_PRIVATE_KEY);
+        URI_MATCHER.addURI(AUTHORITY, CONTACTS_PATH, CONTACTS);
+        URI_MATCHER.addURI(AUTHORITY, CONTACTS_PATH + "/#", CONTACT_ID);
+        URI_MATCHER.addURI(AUTHORITY, MESSAGES_PATH, MESSAGES);
+        URI_MATCHER.addURI(AUTHORITY, MESSAGES_PATH + "/#", MESSAGE_ID);
+        URI_MATCHER.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH, MESSAGES_CONTACT);
+        URI_MATCHER.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH + "/#", MESSAGES_CONTACT_ID);
+        URI_MATCHER.addURI(AUTHORITY, MESSAGES_CONTACT_JOIN_PATH + "/findby/contact/privatekey/*", MESSAGES_CONTACT_BY_CONTACT_PRIVATE_KEY);
     }
 
     private DBHelper dbHelper;
@@ -82,7 +83,7 @@ public class HermesContentProvider extends ContentProvider {
 
     @Override
     public Uri insert(Uri uri, ContentValues values) {
-        int uriType = sURIMatcher.match(uri);
+        int uriType = URI_MATCHER.match(uri);
         SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
         Uri result;
 
@@ -115,7 +116,7 @@ public class HermesContentProvider extends ContentProvider {
         Cursor cursor;
         SQLiteDatabase db;
 
-        int uriType = sURIMatcher.match(uri);
+        int uriType = URI_MATCHER.match(uri);
         switch (uriType) {
             case CONTACT_ID:
                 // adding the ID to the original query
@@ -135,10 +136,11 @@ public class HermesContentProvider extends ContentProvider {
                 break;
             case MESSAGES_CONTACT_ID:
                 // adding the ID to the original query
-                queryBuilder.appendWhere(MESSAGE_COLUMN_ID + "=" + uri.getLastPathSegment());
+                queryBuilder.appendWhere(MESSAGE_COLUMN_CONTACT_ID + "=" + uri.getLastPathSegment());
             case MESSAGES_CONTACT:
                 checkColumnsMessagesContactJoin(MESSAGE_CONTACT_ALL_COLUMNS);
                 queryBuilder.setTables(TABLE_JOIN_MESSAGE_CONTACT);
+                queryBuilder.setProjectionMap(DBHelper.MESSAGE_CONTACT_JOIN_PROJECTION_MAP);
 //                queryBuilder.setProjectionMap(MESSAGE_CONTACT_JOIN_PROJECTION_MAP);
                 db = dbHelper.getWritableDatabase();
                 break;
