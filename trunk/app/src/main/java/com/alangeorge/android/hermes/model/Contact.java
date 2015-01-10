@@ -133,12 +133,16 @@ public class Contact {
 
     private void load(Cursor cursor, boolean closeCursor) throws ModelException {
         if (cursor != null && cursor.getCount() > 0) {
-            setId(cursor.getLong(0));
-            setName(cursor.getString(1));
-            setPublicKeyEncoded(cursor.getString(2));
-            setGcmId(cursor.getString(3));
-            setCreateTime(new Date(cursor.getLong(4)));
-            if (closeCursor) cursor.close();
+            try {
+                setId(cursor.getLong(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[0])));
+                setName(cursor.getString(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[1])));
+                setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[2])));
+                setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[3])));
+                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[4]))));
+                if (closeCursor) cursor.close();
+            } catch (Exception e) {
+                throw new ModelException("unable to load contact from cursor", e);
+            }
         } else {
             throw new ModelException("unable to load: cursor null or count is 0");
         }
@@ -150,7 +154,7 @@ public class Contact {
      * @param cursor the {@link android.database.Cursor} to convert
      * @return the resulting {@link com.alangeorge.android.hermes.model.Contact}, null if Cursor is empty
      */
-    public static Contact cursorToContact(Cursor cursor) {
+    public static Contact cursorToContact(Cursor cursor) throws ModelException {
         if (cursor == null || cursor.getCount() == 0) {
             Log.e(TAG, "cursor null or empty");
             return null;
@@ -161,12 +165,12 @@ public class Contact {
         }
 
         Contact contact = new Contact();
-
-        contact.setId(cursor.getLong(0));
-        contact.setName(cursor.getString(1));
-        contact.setPublicKeyEncoded(cursor.getString(2));
-        contact.setGcmId(cursor.getString(3));
-        contact.setCreateTime(new Date(cursor.getLong(4)));
+        contact.load(cursor, false);
+//        contact.setId(cursor.getLong(0));
+//        contact.setName(cursor.getString(1));
+//        contact.setPublicKeyEncoded(cursor.getString(2));
+//        contact.setGcmId(cursor.getString(3));
+//        contact.setCreateTime(new Date(cursor.getLong(4)));
 
         return contact;
     }

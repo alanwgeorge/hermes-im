@@ -233,19 +233,25 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
     }
 
     private static class ContactCursorAdapter extends SimpleCursorAdapter {
-        @SuppressWarnings("UnusedDeclaration")
         private static final String TAG = "Hermes.ContactCursorAdapter";
+        private Context context;
 
         public ContactCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to, int flags) {
             super(context, layout, c, from, to, flags);
+            this.context = context;
         }
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View view = super.getView(position, convertView, parent);
 
-            // here we set a convenience data object on the view for easy access to data about this Contact item
-            view.setTag(R.id.contact_view_tag_id, Contact.cursorToContact(getCursor()));
+            try {
+                // here we set a convenience data object on the view for easy access to data about this Contact item
+                view.setTag(R.id.contact_view_tag_id, Contact.cursorToContact(getCursor()));
+            } catch (ModelException e) {
+                Log.e(TAG, "error converting cursor to Contact", e);
+                Toast.makeText(context, "Unable to retrieve Contact from database", Toast.LENGTH_LONG).show();
+            }
 
             return view;
         }
