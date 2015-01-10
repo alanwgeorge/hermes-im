@@ -18,6 +18,7 @@ import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
 import static com.alangeorge.android.hermes.App.DEFAULT_SIGNATURE_ALGORITHM;
 import static com.alangeorge.android.hermes.App.context;
 import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_ALL_COLUMNS;
+import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_CONTACT_ALL_COLUMNS;
 
 @SuppressWarnings("UnusedDeclaration")
 public class Message {
@@ -34,6 +35,7 @@ public class Message {
     private long contactId;
     private Date createTime;
     private Date readTime;
+    private Contact contact;
 
     public Message() {
         GsonBuilder builder = new GsonBuilder();
@@ -43,7 +45,7 @@ public class Message {
 
     public Message(long id) throws ModelException {
         this();
-        Uri uri = Uri.parse(HermesContentProvider.MESSAGES_CONTENT_URI + "/" + id);
+        Uri uri = Uri.parse(HermesContentProvider.MESSAGES_CONTACT_CONTENT_URI + "/" + id);
         load(uri);
     }
 
@@ -107,6 +109,14 @@ public class Message {
         this.readTime = readTime;
     }
 
+    public Contact getContact() {
+        return contact;
+    }
+
+    public void setContact(Contact contact) {
+        this.contact = contact;
+    }
+
     public void sign(PrivateKey senderPrivateKey) {
         if (body == null) {
             Log.e(TAG, "message body null, not signing");
@@ -166,6 +176,11 @@ public class Message {
         return "Message{" +
                 "signature='" + signature + '\'' +
                 ", body=" + body +
+                ", id=" + id +
+                ", contactId=" + contactId +
+                ", createTime=" + createTime +
+                ", readTime=" + readTime +
+                ", contact=" + contact +
                 '}';
     }
 
@@ -174,33 +189,68 @@ public class Message {
     }
 
     private void load(Uri uri) throws ModelException {
-        Cursor cursor = context.getContentResolver().query(
-                uri,
-                MESSAGE_ALL_COLUMNS,
-                null,
-                null,
-                null
-        );
+        int uriType = HermesContentProvider.URI_MATCHER.match(uri);
+
+        Cursor cursor;
+
+        switch (uriType) {
+            case HermesContentProvider.MESSAGES: // loads first message
+            case HermesContentProvider.MESSAGE_ID:
+                cursor = context.getContentResolver().query(
+                        uri,
+                        MESSAGE_ALL_COLUMNS,
+                        null,
+                        null,
+                        null
+                );
+                break;
+            case HermesContentProvider.MESSAGES_CONTACT: // loads first messages/contact join
+            case HermesContentProvider.MESSAGES_CONTACT_ID:
+                cursor = context.getContentResolver().query(
+                        uri,
+                        MESSAGE_CONTACT_ALL_COLUMNS,
+                        null,
+                        null,
+                        null
+                );
+                break;
+            default:
+                throw new ModelException("unknown uriType: " + uri);
+        }
+
         cursor.moveToFirst();
         load(cursor, true);
     }
 
     private void load(Cursor cursor, boolean closeCursor) throws ModelException {
         if (cursor != null && cursor.getCount() > 0) {
-            setId(cursor.getLong(0));
-            setContactId(cursor.getLong(1));
-            Message temp = new Message(cursor.getString(2));
-            setSignature(temp.getSignature());
-            setBody(temp.getBody());
-            setReadTime(new Date(cursor.getLong(3)));
-            setCreateTime(new Date(cursor.getLong(4)));
+            try {
+                setId(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[0])));
+                setContactId(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[1])));
+                Message temp = new Message(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[2])));
+                setSignature(temp.getSignature());
+                setBody(temp.getBody());
+                setReadTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[3]))));
+                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[4]))));
+                if (cursor.getColumnCount() > 5) { // this is a messages/contact join
+                    Contact contact = new Contact();
+                    contact.setId(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[5])));
+                    contact.setName(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[6])));
+                    contact.setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[7])));
+                    contact.setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[8])));
+                    contact.setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[9]))));
+                    setContact(contact);
+                }
+            } catch (Exception e) {
+                throw new ModelException("unable to load message cursor", e);
+            }
             if (closeCursor) cursor.close();
         } else {
             throw new ModelException("unable to load: cursor null or count is 0");
         }
     }
 
-    public static Message cursorToMessage(Cursor cursor) {
+    public static Message cursorToMessage(Cursor cursor) throws ModelException {
         if (cursor == null || cursor.getCount() == 0) {
             Log.e(TAG, "cursor null or empty");
             return null;
@@ -210,12 +260,8 @@ public class Message {
             cursor.moveToFirst();
         }
 
-        Message message = new Message(cursor.getString(2));
-
-        message.setId(cursor.getLong(0));
-        message.setContactId(cursor.getLong(1));
-        message.setReadTime(new Date(cursor.getLong(3)));
-        message.setCreateTime(new Date(cursor.getLong(4)));
+        Message message = new Message();
+        message.load(cursor, true);
 
         return message;
     }

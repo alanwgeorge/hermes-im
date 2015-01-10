@@ -61,7 +61,7 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
 
         Cursor contactCursor = getContext().getContentResolver().query(insertedContactUri, DBHelper.CONTACT_ALL_COLUMNS, null, null, null);
         contact = Contact.cursorToContact(contactCursor);
-
+        contactCursor.close();
         assertNotNull("contact is null from cursor", contact);
         assertEquals("contact name not as expected from cursor", contact.getName(), name);
     }
@@ -80,6 +80,7 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
 
         Cursor messageCursor = getContext().getContentResolver().query(insertedMessageUri, DBHelper.MESSAGE_ALL_COLUMNS, null, null, null);
         message = Message.cursorToMessage(messageCursor);
+        messageCursor.close();
         assertNotNull("message is null from cursor", message);
         assertNotNull("message body is null from cursor", message.getBody());
         assertEquals("message sender public key not as expected from cursor", message.getBody().getSenderPublicKey(), contactPublicKey);
@@ -99,8 +100,19 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
         assertTrue("message failed signature verification from constructor", message.verifySignature());
 
         // now query the join
-        Cursor messagesContactCursor = getContext().getContentResolver().query(HermesContentProvider.MESSAGES_CONTACT_CONTENT_URI, DBHelper.MESSAGE_CONTACT_ALL_COLUMNS, null, null, null);
+        Uri messagesContactUri = Uri.parse(HermesContentProvider.MESSAGES_CONTACT_CONTENT_URI + "/" + message.getId());
+        Cursor messagesContactCursor = getContext().getContentResolver().query(messagesContactUri, DBHelper.MESSAGE_CONTACT_ALL_COLUMNS, null, null, null);
         assertTrue("messages/contact join query return no records", messagesContactCursor.getCount() > 0);
+        Message messageContact = Message.cursorToMessage(messagesContactCursor);
+        messagesContactCursor.close();
+
+        Log.d(TAG, "messageContact = " + messageContact);
+        assertNotNull("message is null from static factory", messageContact);
+        assertNotNull("message body is null from static factory", messageContact.getBody());
+        assertEquals("message sender public key not as expected from static factory", messageContact.getBody().getSenderPublicKey(), contactPublicKey);
+        assertTrue("message failed signature verification from static factory", messageContact.verifySignature());
+        assertTrue("contact id mismatch from static factory", messageContact.getContactId() == messageContact.getContact().getId());
+        assertTrue("contact public key mismatch from static factory", messageContact.getBody().getSenderPublicKey().equals(messageContact.getContact().getPublicKeyEncoded()));
     }
 
     private Uri messageBasicInsertAndFetch(String contactPublicKey, String messageJson) throws Exception {

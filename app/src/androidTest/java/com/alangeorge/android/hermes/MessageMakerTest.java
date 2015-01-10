@@ -50,6 +50,7 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
 
         // onCreate() should register for us GCM, must be on device/emulator with google play services
         startActivity(new Intent(getInstrumentation().getTargetContext(), MainActivity.class), null, null);
+        getInstrumentation().waitForIdleSync();
 
         gcmId = getGcmRegistrationId();
 
