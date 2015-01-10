@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.alangeorge.android.hermes.BuildConfig;
 import com.alangeorge.android.hermes.model.provider.LoggingCursorFactory;
 
 import java.util.HashMap;
@@ -12,7 +13,7 @@ import java.util.Map;
 
 /**
  *
- * Below are example commands (OSX) to access the database of a device with BloodHound installed
+ * Below are example commands (OSX) to access the database of a device with Hermes installed
  * <p>
  * <pre>
  * {@code
@@ -113,7 +114,7 @@ public class DBHelper extends SQLiteOpenHelper {
     };
 
     public DBHelper(Context context) {
-        super(context, DATABASE_NAME, new LoggingCursorFactory(), DATABASE_VERSION);
+        super(context, DATABASE_NAME, BuildConfig.DEBUG ? new LoggingCursorFactory() : null, DATABASE_VERSION);
     }
 
     @Override
