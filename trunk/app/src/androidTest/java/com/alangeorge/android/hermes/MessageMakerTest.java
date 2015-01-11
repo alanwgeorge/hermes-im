@@ -15,15 +15,6 @@ import java.util.Date;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
-import static com.alangeorge.android.hermes.App.DEFAULT_AES_CIPHER;
-import static com.alangeorge.android.hermes.App.DEFAULT_AES_SECURITY_PROVIDER;
-import static com.alangeorge.android.hermes.App.DEFAULT_CHARACTER_SET;
-import static com.alangeorge.android.hermes.App.DEFAULT_RSA_CIPHER;
-import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
-import static com.alangeorge.android.hermes.App.deleteKeyPair;
-import static com.alangeorge.android.hermes.App.getGcmRegistrationId;
-import static com.alangeorge.android.hermes.App.makeKeyPair;
-
 public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
     private static final String TAG = "Hermes.MessageMakerTest";
 
@@ -52,12 +43,12 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
         startActivity(new Intent(getInstrumentation().getTargetContext(), MainActivity.class), null, null);
         getInstrumentation().waitForIdleSync();
 
-        gcmId = getGcmRegistrationId();
+        gcmId = App.getGcmRegistrationId();
 
         assertNotSame("GCM id not found", gcmId, "");
 
-        fromKeyPair1 = makeKeyPair(fromKeyPairAlias);
-        toKeyPair1 = makeKeyPair(toKeyPairAlias);
+        fromKeyPair1 = App.makeKeyPair(fromKeyPairAlias);
+        toKeyPair1 = App.makeKeyPair(toKeyPairAlias);
 
         contact1 = new Contact();
         contact1.setId(100);
@@ -72,12 +63,15 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
 
     @Override
     public void tearDown() throws Exception {
-        deleteKeyPair(fromKeyPairAlias);
-        deleteKeyPair(toKeyPairAlias);
+        App.deleteKeyPair(fromKeyPairAlias);
+        App.deleteKeyPair(toKeyPairAlias);
 
         super.tearDown();
     }
 
+    // tests creating a Message which includes encryption and signing
+    // verifies the message both before and after Json marshaling
+    // finaly decrypts the message and compares it to the original
     public void testMakeMessage() throws Exception {
         Log.d(TAG, "testMakeMessage()");
         MessageMaker messageMaker = new MessageMaker();
@@ -102,20 +96,20 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
 
         // decode the symmetricKey using receivers private key
         byte[] symmetricKeyDecodedBytes;
-        Cipher cipher = Cipher.getInstance(DEFAULT_RSA_CIPHER, DEFAULT_RSA_SECURITY_PROVIDER);
+        Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
         cipher.init(Cipher.DECRYPT_MODE, toKeyPair1.getPrivate());
         symmetricKeyDecodedBytes = cipher.doFinal(Base64.decode(message.getBody().getMessageKey(), Base64.NO_WRAP));
 
         // turn our decrypted bytes into a key
-        SecretKeySpec symmetricKeyFromMessage = new SecretKeySpec(symmetricKeyDecodedBytes, DEFAULT_AES_CIPHER);
+        SecretKeySpec symmetricKeyFromMessage = new SecretKeySpec(symmetricKeyDecodedBytes, App.DEFAULT_AES_CIPHER);
 
         // decrypt our message with our decrypted symmetric key
         byte[] theTestTextInDecodedBytes;
-        cipher = Cipher.getInstance(DEFAULT_AES_CIPHER, DEFAULT_AES_SECURITY_PROVIDER);
+        cipher = Cipher.getInstance(App.DEFAULT_AES_CIPHER, App.DEFAULT_AES_SECURITY_PROVIDER);
         cipher.init(Cipher.DECRYPT_MODE, symmetricKeyFromMessage);
         theTestTextInDecodedBytes = cipher.doFinal(Base64.decode(message.getBody().getMessage(), Base64.NO_WRAP));
 
-        String receivedMessageText = new String(theTestTextInDecodedBytes, DEFAULT_CHARACTER_SET);
+        String receivedMessageText = new String(theTestTextInDecodedBytes, App.DEFAULT_CHARACTER_SET);
 
         assertTrue("sent and received message not equal", receivedMessageText.equals(messageText));
     }

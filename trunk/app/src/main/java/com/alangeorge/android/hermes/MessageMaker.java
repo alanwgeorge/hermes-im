@@ -12,12 +12,6 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
-import static com.alangeorge.android.hermes.App.DEFAULT_AES_CIPHER;
-import static com.alangeorge.android.hermes.App.DEFAULT_AES_SECURITY_PROVIDER;
-import static com.alangeorge.android.hermes.App.DEFAULT_CHARACTER_SET;
-import static com.alangeorge.android.hermes.App.DEFAULT_RSA_CIPHER;
-import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
-
 public class MessageMaker {
     private static final String TAG = "Hermes.MessageMaker";
 
@@ -43,9 +37,9 @@ public class MessageMaker {
         // encode the message with symmetric key
         byte[] theTestTextInEncodedBytes;
         try {
-            Cipher cipher = Cipher.getInstance(DEFAULT_AES_CIPHER, DEFAULT_AES_SECURITY_PROVIDER);
+            Cipher cipher = Cipher.getInstance(App.DEFAULT_AES_CIPHER, App.DEFAULT_AES_SECURITY_PROVIDER);
             cipher.init(Cipher.ENCRYPT_MODE, symmetricKey);
-            theTestTextInEncodedBytes = cipher.doFinal(messageText.getBytes(DEFAULT_CHARACTER_SET));
+            theTestTextInEncodedBytes = cipher.doFinal(messageText.getBytes(App.DEFAULT_CHARACTER_SET));
         } catch (Exception e) {
             throw new MessageMakerException(e);
         }
@@ -55,7 +49,7 @@ public class MessageMaker {
         // encode symmetricKey with receivers public key
         byte[] symmetricKeyEncodedBytes;
         try {
-            Cipher cipher = Cipher.getInstance(DEFAULT_RSA_CIPHER, DEFAULT_RSA_SECURITY_PROVIDER);
+            Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
             cipher.init(Cipher.ENCRYPT_MODE, to.getPublicKey());
             symmetricKeyEncodedBytes = cipher.doFinal(symmetricKey.getEncoded());
         } catch (Exception e) {

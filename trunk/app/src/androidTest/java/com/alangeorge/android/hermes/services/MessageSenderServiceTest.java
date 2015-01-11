@@ -10,17 +10,10 @@ import android.util.Log;
 
 import com.alangeorge.android.hermes.App;
 
-import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_GCM_ID;
-import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_MESSAGE_EXTRA_NAME;
-import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_MESSAGE_TEXT;
-import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_FAILED;
-import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_MESSAGE;
-import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_SUCCESS;
-
 public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderService> {
     private static final String TAG = "Hermes.MessageSenderServiceTest";
 
-    // Service will send message send status to this messenger
+    // Service will send messages about send status to this messenger
     private Messenger messageSenderServiceTestMessenger = new Messenger(new MessageSenderServiceInboundMessageHandler());
     private boolean didMessageStatusMessageArrive = false;
     private boolean didMessageSuccess = false;
@@ -43,10 +36,10 @@ public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderServi
 
         assertEquals("service not running after bind call", getService().isRunning(), true);
 
-        android.os.Message serviceMessage = android.os.Message.obtain(null, MSG_SEND_MESSAGE);
-        serviceMessage.getData().putString(ARG_MESSAGE_TEXT, "HelloWorld");
-        serviceMessage.getData().putString(ARG_MESSAGE_EXTRA_NAME, "message");
-        serviceMessage.getData().putString(ARG_GCM_ID, App.getGcmRegistrationId());
+        android.os.Message serviceMessage = android.os.Message.obtain(null, MessageSenderService.MSG_SEND_MESSAGE);
+        serviceMessage.getData().putString(MessageSenderService.ARG_MESSAGE_TEXT, "HelloWorld");
+        serviceMessage.getData().putString(MessageSenderService.ARG_MESSAGE_EXTRA_NAME, "message");
+        serviceMessage.getData().putString(MessageSenderService.ARG_GCM_ID, App.getGcmRegistrationId());
         // message sent status will be sent to this messenger
         serviceMessage.replyTo = messageSenderServiceTestMessenger;
         try {
@@ -79,11 +72,11 @@ public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderServi
         public void handleMessage(android.os.Message msg) {
             didMessageStatusMessageArrive = true;
             switch (msg.what) {
-                case MSG_SEND_SUCCESS:
+                case MessageSenderService.MSG_SEND_SUCCESS:
                     Log.d(TAG, "Message send success");
                     didMessageSuccess = true;
                     break;
-                case MSG_SEND_FAILED:
+                case MessageSenderService.MSG_SEND_FAILED:
                     Log.e(TAG, "Message send failed");
                     break;
                 default:
