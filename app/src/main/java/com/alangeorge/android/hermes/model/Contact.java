@@ -6,6 +6,9 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
+import com.alangeorge.android.hermes.App;
+import com.alangeorge.android.hermes.model.dao.DBHelper;
+import com.alangeorge.android.hermes.model.provider.HermesContentProvider;
 import com.google.gson.annotations.Expose;
 
 import java.security.KeyFactory;
@@ -14,11 +17,6 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Date;
-
-import static com.alangeorge.android.hermes.App.DEFAULT_KEYPAIR_ALGORITHM;
-import static com.alangeorge.android.hermes.App.context;
-import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
-import static com.alangeorge.android.hermes.model.provider.HermesContentProvider.CONTACTS_CONTENT_URI;
 
 @SuppressWarnings("UnusedDeclaration")
 public class Contact {
@@ -36,7 +34,7 @@ public class Contact {
     public Contact() { }
 
     public Contact(long id) throws ModelException {
-        Uri uri = Uri.parse(CONTACTS_CONTENT_URI + "/" + id);
+        Uri uri = Uri.parse(HermesContentProvider.CONTACTS_CONTENT_URI + "/" + id);
         load(uri);
     }
 
@@ -116,13 +114,13 @@ public class Contact {
     }
 
     public static PublicKey decodePublicKey(String base64EncodedKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        return KeyFactory.getInstance(DEFAULT_KEYPAIR_ALGORITHM).generatePublic(new X509EncodedKeySpec(Base64.decode(base64EncodedKey, Base64.NO_WRAP)));
+        return KeyFactory.getInstance(App.DEFAULT_KEYPAIR_ALGORITHM).generatePublic(new X509EncodedKeySpec(Base64.decode(base64EncodedKey, Base64.NO_WRAP)));
     }
 
     private void load(Uri uri) throws ModelException {
-        Cursor cursor = context.getContentResolver().query(
+        Cursor cursor = App.context.getContentResolver().query(
                 uri,
-                CONTACT_ALL_COLUMNS,
+                DBHelper.CONTACT_ALL_COLUMNS,
                 null,
                 null,
                 null
@@ -134,11 +132,11 @@ public class Contact {
     private void load(Cursor cursor, boolean closeCursor) throws ModelException {
         if (cursor != null && cursor.getCount() > 0) {
             try {
-                setId(cursor.getLong(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[0])));
-                setName(cursor.getString(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[1])));
-                setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[2])));
-                setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[3])));
-                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(CONTACT_ALL_COLUMNS[4]))));
+                setId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.CONTACT_ALL_COLUMNS[0])));
+                setName(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.CONTACT_ALL_COLUMNS[1])));
+                setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.CONTACT_ALL_COLUMNS[2])));
+                setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.CONTACT_ALL_COLUMNS[3])));
+                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.CONTACT_ALL_COLUMNS[4]))));
                 if (closeCursor) cursor.close();
             } catch (Exception e) {
                 throw new ModelException("unable to load contact from cursor", e);

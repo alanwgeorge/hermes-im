@@ -12,13 +12,10 @@ import android.util.Log;
 
 import com.alangeorge.android.hermes.R;
 
-import static com.alangeorge.android.hermes.services.GcmIntentService.ACTION_INCOMING_MESSAGE_STATUS;
-import static com.alangeorge.android.hermes.services.GcmIntentService.INCOMING_MESSAGE_ERROR_FAILED_SIGNATURE_VERIFY;
-import static com.alangeorge.android.hermes.services.GcmIntentService.INCOMING_MESSAGE_ERROR_NO_HERMES_MESSAGE_FOUND;
-
 /**
- * From adb...
- * Have to remove the com.google.android.c2dm.permission.SEND permission from the Manifest for this to work
+ * From adb you can send a message to the GcmBroadcastReceiver that will trigger an Intent to the GcmIntentService.
+ * You have to remove the com.google.android.c2dm.permission.SEND permission from the Manifest for this to work
+ * adb shell
  * am broadcast -a com.google.android.c2dm.intent.RECEIVE -n com.alangeorge.android.hermes/com.alangeorge.android.hermes.services.GcmBroadcastReceiver --es "hermes_message" '{"body":{"gcmRegistrationId":"APA91bEtwCaTGLQoACaRkkzTCdeTtsNQHa14wgyfukoJ0y4V8E2QXbjfH40UHI8Edq-_DmkdwSA4s4M9gasZxnSQZfN0cZwa9rbkslkICFOOYgrRdsjWc3ppbzH37aBWlannpTFvzVSH-1lrsy8YNempDhfbDPNKQJYolYLbPEs2u0rR-ld8HIc","message":"sAgnljVyAEGWCFgKcOMe8A\u003d\u003d","messageKey":"eJ7N/4RM6twfHBljsAcpgtah1yyVt3TN1xPlJV3bRtzzjtUSJkSPk4qgHhIw4RbefBIoVqSdRZq4\nNEDm2SMl9efCBORCQHQTq5+MagY3sfQYerEzT4tCMzZZO+qbNC3QkxtnmHk2OuUZV1ojf+7JeEyV\n3uTXjFioadVRcYKtHxZsM5cDFHMduMFRCZwSSiUcHMK6fqbNrabn8ZuaqP92F6Dylvv7twox0iKt\nwVMoRFh6sNwA+lZzizwpxX15uW1tur8J8EwQ3z+RvtO//DcHzUxDGy0itfH63Sf5c59UQyTlLvQK\nZ08qsWH7tM/VvESDJryM4zYvBdfvPrcAIn4GHA\n","publicKey":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB"},"signature":"uStQQS9EktTkdjX3GVGg4vd79ahNhIwtzur3VbeOOJL79ZVy3+o4HjTU1/hTYhCjYchEEZzTntSfCfTsQI0vNu36ZTT7X1/Pz6fNu5GVvBlkFRpHcBj0nXEr7lhyz/ZRgKOlDS5D436vXOt+bGD/2kuwua+HnDIB5ikFzC2TEOQrapVoAOtjDv+HTMn8vlLpq6KNIIDZuMcqnhZVw/NajreE1xsr3sLrWwm12fxAaK7qqPOsPSy5VB+dov89VCIQhqkW2NQ/RSRPeIb9FJZcxrtjDJHVYKcBGUJu1bSsyH+knLfBGP70o9M1ilcc89CXJ3xj8K9l3uOqbRj7mglvLQ\u003d\u003d"}'
  */
 public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
@@ -67,7 +64,7 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
         didMessageStatusMessageArrive = false;
         didMessageSuccess = false;
 
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(incomingMessageBroadcastReceiver, new IntentFilter(ACTION_INCOMING_MESSAGE_STATUS));
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(incomingMessageBroadcastReceiver, new IntentFilter(GcmIntentService.ACTION_INCOMING_MESSAGE_STATUS));
 
         intent1 = new Intent(getContext(), GcmIntentService.class);
         intent1.setAction("com.google.android.c2dm.intent.RECEIVE");
@@ -125,7 +122,7 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
 
         assertTrue("incoming message status message did not arrive from GcmIntentService", didMessageStatusMessageArrive);
         assertFalse("incoming message status was success, expected failure", didMessageSuccess);
-        assertEquals("incorrect error code", lastGcmIntentServiceStatusReceived, INCOMING_MESSAGE_ERROR_FAILED_SIGNATURE_VERIFY);
+        assertEquals("incorrect error code", lastGcmIntentServiceStatusReceived, GcmIntentService.INCOMING_MESSAGE_ERROR_FAILED_SIGNATURE_VERIFY);
     }
 
     public void testGcmIntentDeliveryFailNoHermesMessage() throws Exception {
@@ -149,7 +146,7 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
 
         assertTrue("incoming message status message did not arrive from GcmIntentService", didMessageStatusMessageArrive);
         assertFalse("incoming message status was success, expected failure", didMessageSuccess);
-        assertEquals("incorrect error code", lastGcmIntentServiceStatusReceived, INCOMING_MESSAGE_ERROR_NO_HERMES_MESSAGE_FOUND);
+        assertEquals("incorrect error code", lastGcmIntentServiceStatusReceived, GcmIntentService.INCOMING_MESSAGE_ERROR_NO_HERMES_MESSAGE_FOUND);
     }
 
     public void testBroadcastHermesGcmMessageHappyPath() throws Exception {

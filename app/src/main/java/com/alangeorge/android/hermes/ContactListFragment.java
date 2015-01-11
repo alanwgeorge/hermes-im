@@ -27,16 +27,12 @@ import android.widget.Toast;
 
 import com.alangeorge.android.hermes.model.Contact;
 import com.alangeorge.android.hermes.model.ModelException;
+import com.alangeorge.android.hermes.model.dao.DBHelper;
+import com.alangeorge.android.hermes.model.provider.HermesContentProvider;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
-
-import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_ALL_COLUMNS;
-import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_GCM_ID;
-import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_NAME;
-import static com.alangeorge.android.hermes.model.dao.DBHelper.CONTACT_COLUMN_PUBLIC_KEY;
-import static com.alangeorge.android.hermes.model.provider.HermesContentProvider.CONTACTS_CONTENT_URI;
 
 public class ContactListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
     private static final String TAG = "Hermes.ContactListFragment";
@@ -150,11 +146,11 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
                         if (contact.validateForInsert()) {
                             ContentValues values = new ContentValues();
 
-                            values.put(CONTACT_COLUMN_NAME, contact.getName());
-                            values.put(CONTACT_COLUMN_GCM_ID, contact.getGcmId());
-                            values.put(CONTACT_COLUMN_PUBLIC_KEY, contact.getPublicKeyEncoded());
+                            values.put(DBHelper.CONTACT_COLUMN_NAME, contact.getName());
+                            values.put(DBHelper.CONTACT_COLUMN_GCM_ID, contact.getGcmId());
+                            values.put(DBHelper.CONTACT_COLUMN_PUBLIC_KEY, contact.getPublicKeyEncoded());
 
-                            Uri insertedContactUri = getActivity().getContentResolver().insert(CONTACTS_CONTENT_URI, values);
+                            Uri insertedContactUri = getActivity().getContentResolver().insert(HermesContentProvider.CONTACTS_CONTENT_URI, values);
 
                             try {
                                 Contact insertedContact = new Contact(insertedContactUri);
@@ -196,11 +192,11 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
 
         return new CursorLoader(
                 getActivity(),
-                CONTACTS_CONTENT_URI,
-                CONTACT_ALL_COLUMNS,
+                HermesContentProvider.CONTACTS_CONTENT_URI,
+                DBHelper.CONTACT_ALL_COLUMNS,
                 null,
                 null,
-                CONTACT_COLUMN_NAME);
+                DBHelper.CONTACT_COLUMN_NAME);
     }
 
     @Override
@@ -217,7 +213,7 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
 
     private void fillData() {
         String[] from = new String[] {
-                CONTACT_COLUMN_NAME
+                DBHelper.CONTACT_COLUMN_NAME
         };
 
         int[] to = new int[] {

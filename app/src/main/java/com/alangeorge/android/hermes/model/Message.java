@@ -5,6 +5,8 @@ import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
 
+import com.alangeorge.android.hermes.App;
+import com.alangeorge.android.hermes.model.dao.DBHelper;
 import com.alangeorge.android.hermes.model.provider.HermesContentProvider;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,12 +15,6 @@ import com.google.gson.annotations.Expose;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.util.Date;
-
-import static com.alangeorge.android.hermes.App.DEFAULT_RSA_SECURITY_PROVIDER;
-import static com.alangeorge.android.hermes.App.DEFAULT_SIGNATURE_ALGORITHM;
-import static com.alangeorge.android.hermes.App.context;
-import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_ALL_COLUMNS;
-import static com.alangeorge.android.hermes.model.dao.DBHelper.MESSAGE_CONTACT_ALL_COLUMNS;
 
 @SuppressWarnings("UnusedDeclaration")
 public class Message {
@@ -124,7 +120,7 @@ public class Message {
         }
 
         try {
-            Signature secretKeySigner = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM, DEFAULT_RSA_SECURITY_PROVIDER);
+            Signature secretKeySigner = Signature.getInstance(App.DEFAULT_SIGNATURE_ALGORITHM, App.DEFAULT_RSA_SECURITY_PROVIDER);
             secretKeySigner.initSign(senderPrivateKey);
             secretKeySigner.update(body.getGcmRegistrationId().getBytes());
             secretKeySigner.update(body.getSenderPublicKey().getBytes());
@@ -153,7 +149,7 @@ public class Message {
         }
 
         try {
-            Signature secretKeyVerifier = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM, DEFAULT_RSA_SECURITY_PROVIDER);
+            Signature secretKeyVerifier = Signature.getInstance(App.DEFAULT_SIGNATURE_ALGORITHM, App.DEFAULT_RSA_SECURITY_PROVIDER);
             secretKeyVerifier.initVerify(Contact.decodePublicKey(body.getSenderPublicKey()));
             secretKeyVerifier.update(body.getGcmRegistrationId().getBytes());
             secretKeyVerifier.update(body.getSenderPublicKey().getBytes());
@@ -196,9 +192,9 @@ public class Message {
         switch (uriType) {
             case HermesContentProvider.MESSAGES: // loads first message
             case HermesContentProvider.MESSAGE_ID:
-                cursor = context.getContentResolver().query(
+                cursor = App.context.getContentResolver().query(
                         uri,
-                        MESSAGE_ALL_COLUMNS,
+                        DBHelper.MESSAGE_ALL_COLUMNS,
                         null,
                         null,
                         null
@@ -206,9 +202,9 @@ public class Message {
                 break;
             case HermesContentProvider.MESSAGES_CONTACT: // loads first messages/contact join
             case HermesContentProvider.MESSAGES_CONTACT_ID:
-                cursor = context.getContentResolver().query(
+                cursor = App.context.getContentResolver().query(
                         uri,
-                        MESSAGE_CONTACT_ALL_COLUMNS,
+                        DBHelper.MESSAGE_CONTACT_ALL_COLUMNS,
                         null,
                         null,
                         null
@@ -225,20 +221,20 @@ public class Message {
     private void load(Cursor cursor, boolean closeCursor) throws ModelException {
         if (cursor != null && cursor.getCount() > 0) {
             try {
-                setId(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[0])));
-                setContactId(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[1])));
-                Message temp = new Message(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[2])));
+                setId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[0])));
+                setContactId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[1])));
+                Message temp = new Message(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[2])));
                 setSignature(temp.getSignature());
                 setBody(temp.getBody());
-                setReadTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[3]))));
-                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_ALL_COLUMNS[4]))));
+                setReadTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[3]))));
+                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[4]))));
                 if (cursor.getColumnCount() > 5) { // this is a messages/contact join
                     Contact contact = new Contact();
-                    contact.setId(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[5])));
-                    contact.setName(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[6])));
-                    contact.setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[7])));
-                    contact.setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[8])));
-                    contact.setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_CONTACT_ALL_COLUMNS[9]))));
+                    contact.setId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[5])));
+                    contact.setName(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[6])));
+                    contact.setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[7])));
+                    contact.setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[8])));
+                    contact.setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[9]))));
                     setContact(contact);
                 }
             } catch (Exception e) {

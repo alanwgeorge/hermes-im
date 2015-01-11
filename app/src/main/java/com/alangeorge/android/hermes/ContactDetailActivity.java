@@ -29,12 +29,6 @@ import com.alangeorge.android.hermes.services.MessageSenderService;
 
 import java.security.KeyPair;
 
-import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_GCM_ID;
-import static com.alangeorge.android.hermes.services.MessageSenderService.ARG_MESSAGE_TEXT;
-import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_FAILED;
-import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_MESSAGE;
-import static com.alangeorge.android.hermes.services.MessageSenderService.MSG_SEND_SUCCESS;
-
 
 public class ContactDetailActivity extends ActionBarActivity {
     @SuppressWarnings("UnusedDeclaration")
@@ -194,9 +188,9 @@ public class ContactDetailActivity extends ActionBarActivity {
                 return;
             }
 
-            android.os.Message serviceMessage = android.os.Message.obtain(null, MSG_SEND_MESSAGE);
-            serviceMessage.getData().putString(ARG_MESSAGE_TEXT, message.toJson());
-            serviceMessage.getData().putString(ARG_GCM_ID, contact.getGcmId());
+            android.os.Message serviceMessage = android.os.Message.obtain(null, MessageSenderService.MSG_SEND_MESSAGE);
+            serviceMessage.getData().putString(MessageSenderService.ARG_MESSAGE_TEXT, message.toJson());
+            serviceMessage.getData().putString(MessageSenderService.ARG_GCM_ID, contact.getGcmId());
             serviceMessage.replyTo = contactDetailFragmentMessenger;
             try {
                 messageSenderServiceMessenger.send(serviceMessage);
@@ -210,10 +204,10 @@ public class ContactDetailActivity extends ActionBarActivity {
             @Override
             public void handleMessage(android.os.Message msg) {
                 switch (msg.what) {
-                    case MSG_SEND_SUCCESS:
+                    case MessageSenderService.MSG_SEND_SUCCESS:
                         Log.d(TAG, "Message send success");
                         break;
-                    case MSG_SEND_FAILED:
+                    case MessageSenderService.MSG_SEND_FAILED:
                         Log.e(TAG, "Message send failed");
                         break;
                     default:
