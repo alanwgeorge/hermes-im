@@ -9,8 +9,10 @@ import android.test.ProviderTestCase2;
 import android.util.Log;
 
 import com.alangeorge.android.hermes.App;
+import com.alangeorge.android.hermes.TestingUtils;
 import com.alangeorge.android.hermes.model.Contact;
 import com.alangeorge.android.hermes.model.Message;
+import com.alangeorge.android.hermes.model.ModelException;
 import com.alangeorge.android.hermes.model.dao.DBHelper;
 
 import java.net.URLDecoder;
@@ -47,6 +49,7 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
 
     public void testContactBasicInsertAndFetch() throws Exception {
         String name = "Micky Mouse";
+        //noinspection SpellCheckingInspection
         String contactPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB";
 
         ContentValues values = new ContentValues();
@@ -68,8 +71,34 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
         assertEquals("contact name not as expected from cursor", contact.getName(), name);
     }
 
-    public void testMessageBasicInsertAndFetch() throws Exception {
+    public void testContactBasicInsertAndFetchByPublicKey() throws Exception {
+        String name = "Micky Mouse";
+        //noinspection SpellCheckingInspection
         String contactPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB";
+
+        ContentValues values = new ContentValues();
+        values.put(DBHelper.CONTACT_COLUMN_NAME, name);
+        values.put(DBHelper.CONTACT_COLUMN_GCM_ID, "fakeGcmID");
+        values.put(DBHelper.CONTACT_COLUMN_PUBLIC_KEY, contactPublicKey);
+
+        // insert
+        getContext().getContentResolver().insert(HermesContentProvider.CONTACTS_CONTENT_URI, values);
+
+        // fetch
+        Uri contactUri = Uri.parse(HermesContentProvider.CONTACTS_CONTENT_BY_PUBLIC_KEY_URI + "/" + URLEncoder.encode(contactPublicKey, App.DEFAULT_CHARACTER_SET.displayName()));
+        Cursor contactCursor = getContext().getContentResolver().query(contactUri, DBHelper.CONTACT_ALL_COLUMNS, null, null, null);
+        Contact contact = Contact.cursorToContact(contactCursor);
+        contactCursor.close();
+
+        assertNotNull("contact is null from cursor", contact);
+        assertEquals("contact name not as expected from cursor", contact.getName(), name);
+        assertEquals("contact public key not as expected from cursor", contact.getPublicKeyEncoded(), contactPublicKey);
+    }
+
+    public void testMessageBasicInsertAndFetch() throws Exception {
+        //noinspection SpellCheckingInspection
+        String contactPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB";
+        //noinspection SpellCheckingInspection
         String messageJson = "{\"body\":{\"gcmRegistrationId\":\"APA91bEtwCaTGLQoACaRkkzTCdeTtsNQHa14wgyfukoJ0y4V8E2QXbjfH40UHI8Edq-_DmkdwSA4s4M9gasZxnSQZfN0cZwa9rbkslkICFOOYgrRdsjWc3ppbzH37aBWlannpTFvzVSH-1lrsy8YNempDhfbDPNKQJYolYLbPEs2u0rR-ld8HIc\",\"message\":\"cYTr2JyNi8SA/Ibl5r63vQ\\u003d\\u003d\",\"messageKey\":\"o2Io1SbH56Np2HvtKo4YPPs5TdKh1zsHCzjg9NwU1q0CG4UMF/h8s452S0rINJgy1tTqqYgIffEU\\n5vdf7KbASza+tcrfVv/1RzNXjJtZQUca/9rC+PLDDPXRl45c3I079Ygr3cfyEOX//8/S8hDe+kkV\\nfM2XQuvWAujoc8IYTce84+nUBMhtRxcGIU0IhaN9vD/+s0SXb4sDjGBTBzpbgRjVFVrYN8Uafew4\\nD3tUODNzq4yKDDPhJmt5BUsNk8fiARzDXWpDejEY+n7lNToiS3uqHUeI0Anor8y9SAXD4jYCfwZh\\nMdO2jNC3qlxvSOLrg/qmdlkOMyX5PQL120yxPw\\n\",\"senderPublicKey\":\"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB\"},\"signature\":\"YDW+dlDYuPwnVzRcTKeL99VeZOCluwg1VkQqTvME1gzL6amBxLTMrTS0erUTbPK0+toZwoCHyF7s8rXYoOqtlkQv5tIOwB6JvXpnnr6C0aST15iz2ob+cA7nHz+UokH1/zUPwZAKF+xJKia6VkkGrl0nqzRjTpsyLEso+qqXDpw5X7gw7x1+eZTojOC8MyUJg2G8yYtmaVeR3Z8xHLdjU8wqNdXMG9joEbHKHQbvsYL5Tbhlh3QORYSU47WLItojl6chuleVc2eJ4VuNgTkLEADafD/vZrQ3JWHjeGBQ1L6FyYYaCmiT8z/BQrqYXSRKJrGDU5r36NMhJS0tv7SWeA\\u003d\\u003d\"}";
 
         Uri insertedMessageUri = messageBasicInsertAndFetch(contactPublicKey, messageJson);
@@ -90,7 +119,9 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
     }
 
     public void testMessagesContactJoinQueryByMessageId() throws Exception {
+        //noinspection SpellCheckingInspection
         String contactPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB";
+        //noinspection SpellCheckingInspection
         String messageJson = "{\"body\":{\"gcmRegistrationId\":\"APA91bEtwCaTGLQoACaRkkzTCdeTtsNQHa14wgyfukoJ0y4V8E2QXbjfH40UHI8Edq-_DmkdwSA4s4M9gasZxnSQZfN0cZwa9rbkslkICFOOYgrRdsjWc3ppbzH37aBWlannpTFvzVSH-1lrsy8YNempDhfbDPNKQJYolYLbPEs2u0rR-ld8HIc\",\"message\":\"cYTr2JyNi8SA/Ibl5r63vQ\\u003d\\u003d\",\"messageKey\":\"o2Io1SbH56Np2HvtKo4YPPs5TdKh1zsHCzjg9NwU1q0CG4UMF/h8s452S0rINJgy1tTqqYgIffEU\\n5vdf7KbASza+tcrfVv/1RzNXjJtZQUca/9rC+PLDDPXRl45c3I079Ygr3cfyEOX//8/S8hDe+kkV\\nfM2XQuvWAujoc8IYTce84+nUBMhtRxcGIU0IhaN9vD/+s0SXb4sDjGBTBzpbgRjVFVrYN8Uafew4\\nD3tUODNzq4yKDDPhJmt5BUsNk8fiARzDXWpDejEY+n7lNToiS3uqHUeI0Anor8y9SAXD4jYCfwZh\\nMdO2jNC3qlxvSOLrg/qmdlkOMyX5PQL120yxPw\\n\",\"senderPublicKey\":\"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB\"},\"signature\":\"YDW+dlDYuPwnVzRcTKeL99VeZOCluwg1VkQqTvME1gzL6amBxLTMrTS0erUTbPK0+toZwoCHyF7s8rXYoOqtlkQv5tIOwB6JvXpnnr6C0aST15iz2ob+cA7nHz+UokH1/zUPwZAKF+xJKia6VkkGrl0nqzRjTpsyLEso+qqXDpw5X7gw7x1+eZTojOC8MyUJg2G8yYtmaVeR3Z8xHLdjU8wqNdXMG9joEbHKHQbvsYL5Tbhlh3QORYSU47WLItojl6chuleVc2eJ4VuNgTkLEADafD/vZrQ3JWHjeGBQ1L6FyYYaCmiT8z/BQrqYXSRKJrGDU5r36NMhJS0tv7SWeA\\u003d\\u003d\"}";
 
         // insert a contact and a message from that contact
@@ -118,7 +149,9 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
     }
 
     public void testMessagesContactJoinQueryByContactPublicKey() throws Exception {
+        //noinspection SpellCheckingInspection
         String contactPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB";
+        //noinspection SpellCheckingInspection
         String messageJson = "{\"body\":{\"gcmRegistrationId\":\"APA91bEtwCaTGLQoACaRkkzTCdeTtsNQHa14wgyfukoJ0y4V8E2QXbjfH40UHI8Edq-_DmkdwSA4s4M9gasZxnSQZfN0cZwa9rbkslkICFOOYgrRdsjWc3ppbzH37aBWlannpTFvzVSH-1lrsy8YNempDhfbDPNKQJYolYLbPEs2u0rR-ld8HIc\",\"message\":\"cYTr2JyNi8SA/Ibl5r63vQ\\u003d\\u003d\",\"messageKey\":\"o2Io1SbH56Np2HvtKo4YPPs5TdKh1zsHCzjg9NwU1q0CG4UMF/h8s452S0rINJgy1tTqqYgIffEU\\n5vdf7KbASza+tcrfVv/1RzNXjJtZQUca/9rC+PLDDPXRl45c3I079Ygr3cfyEOX//8/S8hDe+kkV\\nfM2XQuvWAujoc8IYTce84+nUBMhtRxcGIU0IhaN9vD/+s0SXb4sDjGBTBzpbgRjVFVrYN8Uafew4\\nD3tUODNzq4yKDDPhJmt5BUsNk8fiARzDXWpDejEY+n7lNToiS3uqHUeI0Anor8y9SAXD4jYCfwZh\\nMdO2jNC3qlxvSOLrg/qmdlkOMyX5PQL120yxPw\\n\",\"senderPublicKey\":\"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB\"},\"signature\":\"YDW+dlDYuPwnVzRcTKeL99VeZOCluwg1VkQqTvME1gzL6amBxLTMrTS0erUTbPK0+toZwoCHyF7s8rXYoOqtlkQv5tIOwB6JvXpnnr6C0aST15iz2ob+cA7nHz+UokH1/zUPwZAKF+xJKia6VkkGrl0nqzRjTpsyLEso+qqXDpw5X7gw7x1+eZTojOC8MyUJg2G8yYtmaVeR3Z8xHLdjU8wqNdXMG9joEbHKHQbvsYL5Tbhlh3QORYSU47WLItojl6chuleVc2eJ4VuNgTkLEADafD/vZrQ3JWHjeGBQ1L6FyYYaCmiT8z/BQrqYXSRKJrGDU5r36NMhJS0tv7SWeA\\u003d\\u003d\"}";
 
         assertTrue("unable to URL encode bas64 public key", contactPublicKey.equals(URLDecoder.decode(URLEncoder.encode(contactPublicKey, App.DEFAULT_CHARACTER_SET.displayName()), App.DEFAULT_CHARACTER_SET.displayName())));
@@ -148,6 +181,7 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
     }
 
     public void testAttemptNoContactMessageInsert() throws Exception {
+        //noinspection SpellCheckingInspection
         String messageJson = "{\"body\":{\"gcmRegistrationId\":\"APA91bEtwCaTGLQoACaRkkzTCdeTtsNQHa14wgyfukoJ0y4V8E2QXbjfH40UHI8Edq-_DmkdwSA4s4M9gasZxnSQZfN0cZwa9rbkslkICFOOYgrRdsjWc3ppbzH37aBWlannpTFvzVSH-1lrsy8YNempDhfbDPNKQJYolYLbPEs2u0rR-ld8HIc\",\"message\":\"cYTr2JyNi8SA/Ibl5r63vQ\\u003d\\u003d\",\"messageKey\":\"o2Io1SbH56Np2HvtKo4YPPs5TdKh1zsHCzjg9NwU1q0CG4UMF/h8s452S0rINJgy1tTqqYgIffEU\\n5vdf7KbASza+tcrfVv/1RzNXjJtZQUca/9rC+PLDDPXRl45c3I079Ygr3cfyEOX//8/S8hDe+kkV\\nfM2XQuvWAujoc8IYTce84+nUBMhtRxcGIU0IhaN9vD/+s0SXb4sDjGBTBzpbgRjVFVrYN8Uafew4\\nD3tUODNzq4yKDDPhJmt5BUsNk8fiARzDXWpDejEY+n7lNToiS3uqHUeI0Anor8y9SAXD4jYCfwZh\\nMdO2jNC3qlxvSOLrg/qmdlkOMyX5PQL120yxPw\\n\",\"senderPublicKey\":\"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB\"},\"signature\":\"YDW+dlDYuPwnVzRcTKeL99VeZOCluwg1VkQqTvME1gzL6amBxLTMrTS0erUTbPK0+toZwoCHyF7s8rXYoOqtlkQv5tIOwB6JvXpnnr6C0aST15iz2ob+cA7nHz+UokH1/zUPwZAKF+xJKia6VkkGrl0nqzRjTpsyLEso+qqXDpw5X7gw7x1+eZTojOC8MyUJg2G8yYtmaVeR3Z8xHLdjU8wqNdXMG9joEbHKHQbvsYL5Tbhlh3QORYSU47WLItojl6chuleVc2eJ4VuNgTkLEADafD/vZrQ3JWHjeGBQ1L6FyYYaCmiT8z/BQrqYXSRKJrGDU5r36NMhJS0tv7SWeA\\u003d\\u003d\"}";
 
         ContentValues messageValues = new ContentValues();
@@ -163,6 +197,30 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
         }
 
         fail("should have gotten a constraint exception");
+    }
+
+    public void testMessageCascadeDelete() throws Exception {
+        //noinspection SpellCheckingInspection
+        String contactPublicKey = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB";
+        //noinspection SpellCheckingInspection
+        String messageJson = "{\"body\":{\"gcmRegistrationId\":\"APA91bEtwCaTGLQoACaRkkzTCdeTtsNQHa14wgyfukoJ0y4V8E2QXbjfH40UHI8Edq-_DmkdwSA4s4M9gasZxnSQZfN0cZwa9rbkslkICFOOYgrRdsjWc3ppbzH37aBWlannpTFvzVSH-1lrsy8YNempDhfbDPNKQJYolYLbPEs2u0rR-ld8HIc\",\"message\":\"cYTr2JyNi8SA/Ibl5r63vQ\\u003d\\u003d\",\"messageKey\":\"o2Io1SbH56Np2HvtKo4YPPs5TdKh1zsHCzjg9NwU1q0CG4UMF/h8s452S0rINJgy1tTqqYgIffEU\\n5vdf7KbASza+tcrfVv/1RzNXjJtZQUca/9rC+PLDDPXRl45c3I079Ygr3cfyEOX//8/S8hDe+kkV\\nfM2XQuvWAujoc8IYTce84+nUBMhtRxcGIU0IhaN9vD/+s0SXb4sDjGBTBzpbgRjVFVrYN8Uafew4\\nD3tUODNzq4yKDDPhJmt5BUsNk8fiARzDXWpDejEY+n7lNToiS3uqHUeI0Anor8y9SAXD4jYCfwZh\\nMdO2jNC3qlxvSOLrg/qmdlkOMyX5PQL120yxPw\\n\",\"senderPublicKey\":\"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx/xTfOAkpYsBCjVCrQr5damjrBjUtPWewElM9E2jDcOar4CZ7uVKkqnUG0KF/aOcjjm2xPaUCwC0AXVr7Ds4qB7bDzQxQ2sxmtk6i4jnCSNJ3JTNzIljbEUuC6o2rB1oL+sZgI+8ZBqLp9GNzutH5wfBp+An4gdajTSN8C2TnlWBcZ8K+XcPE5PtqNfbkMtgMB8uhZlGeyLHXLheVZvtYkgH0fFO+2uceoQN9H7u5DejrM7oYWE8gHG+72JhjTKXQOQ6tcG73nMcq/63NQvDFnF8dcICXdbnHt/39YmDZRhrqjKqkX/MtdIqoINyBkVuuhey/C0BT12fxOGG+vhDcQIDAQAB\"},\"signature\":\"YDW+dlDYuPwnVzRcTKeL99VeZOCluwg1VkQqTvME1gzL6amBxLTMrTS0erUTbPK0+toZwoCHyF7s8rXYoOqtlkQv5tIOwB6JvXpnnr6C0aST15iz2ob+cA7nHz+UokH1/zUPwZAKF+xJKia6VkkGrl0nqzRjTpsyLEso+qqXDpw5X7gw7x1+eZTojOC8MyUJg2G8yYtmaVeR3Z8xHLdjU8wqNdXMG9joEbHKHQbvsYL5Tbhlh3QORYSU47WLItojl6chuleVc2eJ4VuNgTkLEADafD/vZrQ3JWHjeGBQ1L6FyYYaCmiT8z/BQrqYXSRKJrGDU5r36NMhJS0tv7SWeA\\u003d\\u003d\"}";
+
+        Uri messageUri = messageBasicInsertAndFetch(contactPublicKey, messageJson);
+
+        Message message = new Message(messageUri);
+
+        // deleting contact should cascade delete contacts message
+        TestingUtils.deleteContact(message.getContactId());
+
+        try {
+            //noinspection UnusedAssignment
+            message = new Message(messageUri);
+        } catch (ModelException e) {
+            // happy path
+            return;
+        }
+
+        fail("message cascade delete failed");
     }
 
     private Uri messageBasicInsertAndFetch(String contactPublicKey, String messageJson) throws Exception {

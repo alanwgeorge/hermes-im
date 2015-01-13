@@ -13,6 +13,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -58,6 +59,10 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.contact, menu);
+
+        if (BuildConfig.DEBUG) {
+            menu.add(1, R.id.action_add_contact_self, 1, "Add Self");
+        }
     }
 
     @Override
@@ -73,8 +78,21 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
             case R.id.action_display_address_qr_code:
                 displayContactQrCode();
                 break;
+            case R.id.action_add_contact_self:
+                addContactSelf();
+                break;
+            default:
+                Log.d(TAG, "unknown menu id: " + id);
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void addContactSelf() {
+        ContentValues values = new ContentValues();
+        values.put(DBHelper.CONTACT_COLUMN_GCM_ID, App.getGcmRegistrationId());
+        values.put(DBHelper.CONTACT_COLUMN_NAME, "Myself");
+        values.put(DBHelper.CONTACT_COLUMN_PUBLIC_KEY, Base64.encodeToString(App.getMyKeyPair().getPublic().getEncoded(), Base64.NO_WRAP));
+        getActivity().getContentResolver().insert(HermesContentProvider.CONTACTS_CONTENT_URI, values);
     }
 
     @Override

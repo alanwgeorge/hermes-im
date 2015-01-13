@@ -37,6 +37,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String CONTACT_COLUMN_NAME = "name";
     public static final String CONTACT_COLUMN_PUBLIC_KEY = "public_key";
     public static final String CONTACT_COLUMN_GCM_ID = "gcm_id";
+    @SuppressWarnings("SpellCheckingInspection")
     public static final String CONTACT_COLUMN_CREATE_TIME = "createtime";
 
     public static final String[] CONTACT_ALL_COLUMNS = {
@@ -59,6 +60,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String MESSAGE_COLUMN_CONTACT_ID = "contact_id";
     public static final String MESSAGE_COLUMN_MESSAGE_JSON = "message_json";
     public static final String MESSAGE_COLUMN_READ_TIME = "read_time"; // -1 == not yet read
+    @SuppressWarnings("SpellCheckingInspection")
     public static final String MESSAGE_COLUMN_CREATE_TIME = "createtime";
 
     public static final String[] MESSAGE_ALL_COLUMNS = {
@@ -69,16 +71,16 @@ public class DBHelper extends SQLiteOpenHelper {
             MESSAGE_COLUMN_CREATE_TIME // 4
     };
 
-    public static final String MESSAGE_TABLE_CREATE = "create table " + TABLE_MESSAGE + " (" + MESSAGE_COLUMN_ID
+    private static final String MESSAGE_TABLE_CREATE = "create table " + TABLE_MESSAGE + " (" + MESSAGE_COLUMN_ID
             + " integer primary key autoincrement, " + MESSAGE_COLUMN_CONTACT_ID + " integer not null, " + MESSAGE_COLUMN_MESSAGE_JSON
             + " text not null, " + MESSAGE_COLUMN_READ_TIME + " integer, " + MESSAGE_COLUMN_CREATE_TIME + " integer not null, foreign key("
-            + MESSAGE_COLUMN_CONTACT_ID + ") references " + TABLE_CONTACT + "(" + CONTACT_COLUMN_ID + "));";
+            + MESSAGE_COLUMN_CONTACT_ID + ") references " + TABLE_CONTACT + "(" + CONTACT_COLUMN_ID + ") on delete cascade);";
 
     public static final String MESSAGE_INDEX_CONTACT_ID_CREATE = "create index " + INDEX_MESSAGE_CONTACT_ID + " on " + TABLE_MESSAGE + "(" + MESSAGE_COLUMN_CONTACT_ID + ");";
 
     // message/contact join
-    public static final String MESSAGE_PREFIX = "m";
-    public static final String CONTACT_PREFIX = "c";
+    private static final String MESSAGE_PREFIX = "m";
+    private static final String CONTACT_PREFIX = "c";
 
     public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_ID = MESSAGE_COLUMN_ID;
     public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_CONTACT_ID = MESSAGE_COLUMN_CONTACT_ID;

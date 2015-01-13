@@ -81,12 +81,17 @@ public class Message {
         this.id = id;
     }
 
+    // contact.getId() is canonical
     public long getContactId() {
-        return contactId;
+        return contact != null ? contact.getId() : contactId;
     }
 
     public void setContactId(long contactId) {
-        this.contactId = contactId;
+        if (contact != null) {
+            this.contactId = contact.getId();
+        } else {
+            this.contactId = contactId;
+        }
     }
 
     public Date getCreateTime() {
@@ -111,6 +116,9 @@ public class Message {
 
     public void setContact(Contact contact) {
         this.contact = contact;
+        if (contact != null) {
+            this.contactId = contact.getId();
+        }
     }
 
     public void sign(PrivateKey senderPrivateKey) {
@@ -190,8 +198,8 @@ public class Message {
         Cursor cursor;
 
         switch (uriType) {
-            case HermesContentProvider.MESSAGES: // loads first message
-            case HermesContentProvider.MESSAGE_ID:
+            case HermesContentProvider.MESSAGES_ALL: // loads first message
+            case HermesContentProvider.MESSAGE_BY_ID:
                 cursor = App.context.getContentResolver().query(
                         uri,
                         DBHelper.MESSAGE_ALL_COLUMNS,
@@ -200,8 +208,8 @@ public class Message {
                         null
                 );
                 break;
-            case HermesContentProvider.MESSAGES_CONTACT: // loads first messages/contact join
-            case HermesContentProvider.MESSAGES_CONTACT_ID:
+            case HermesContentProvider.MESSAGES_CONTACT_ALL: // loads first messages/contact join
+            case HermesContentProvider.MESSAGES_CONTACT_BY_ID:
                 cursor = App.context.getContentResolver().query(
                         uri,
                         DBHelper.MESSAGE_CONTACT_ALL_COLUMNS,
