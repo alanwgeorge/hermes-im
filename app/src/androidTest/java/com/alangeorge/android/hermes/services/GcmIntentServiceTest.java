@@ -11,6 +11,9 @@ import android.test.ServiceTestCase;
 import android.util.Log;
 
 import com.alangeorge.android.hermes.R;
+import com.alangeorge.android.hermes.TestingUtils;
+import com.alangeorge.android.hermes.model.Contact;
+import com.alangeorge.android.hermes.model.Message;
 
 /**
  * From adb you can send a message to the GcmBroadcastReceiver that will trigger an Intent to the GcmIntentService.
@@ -81,6 +84,13 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
     public void testGcmIntentDeliveryHappyPath() throws Exception {
         intent1.putExtra(getContext().getString(R.string.gcm_message_field_message), message1);
 
+        Contact contact = new Contact();
+        contact.setName("Micky Mouse");
+        contact.setGcmId("dummyGcmId");
+        Message message = new Message(message1);
+        contact.setPublicKeyEncoded(message.getBody().getSenderPublicKey());
+        contact = TestingUtils.persistContact(contact);
+
         startService(intent1);
 
         Log.d(TAG, "wait()ing thread for up to 5 seconds for message receive status to arrive from GcmIntentService");
@@ -96,6 +106,8 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
             }
         }
         Log.d(TAG, "wait time was " + (endWait - startWait) + " ms");
+
+        assertTrue("contact delete unsuccessful", TestingUtils.deleteContact(contact.getId()) == 1);
 
         assertTrue("incoming message status message did not arrive from GcmIntentService", didMessageStatusMessageArrive);
         assertTrue("incoming message status was not success", didMessageSuccess);
@@ -149,6 +161,30 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
         assertEquals("incorrect error code", lastGcmIntentServiceStatusReceived, GcmIntentService.INCOMING_MESSAGE_ERROR_NO_HERMES_MESSAGE_FOUND);
     }
 
+    public void testGcmIntentDeliveryFailNoContact() throws Exception {
+        intent1.putExtra(getContext().getString(R.string.gcm_message_field_message), message1);
+
+        startService(intent1);
+
+        Log.d(TAG, "wait()ing thread for up to 5 seconds for message receive status to arrive from GcmIntentService");
+        long startWait = 0;
+        long endWait = 0;
+        synchronized (waitLock) {
+            if (! didMessageStatusMessageArrive) {
+                startWait = System.currentTimeMillis();
+                waitLock.wait(5000);
+                endWait = System.currentTimeMillis();
+            } else {
+                Log.d(TAG, "no wait");
+            }
+        }
+        Log.d(TAG, "wait time was " + (endWait - startWait) + " ms");
+
+        assertTrue("incoming message status message did not arrive from GcmIntentService", didMessageStatusMessageArrive);
+        assertFalse("incoming message status was success, expected failure", didMessageSuccess);
+        assertEquals("incorrect error code", lastGcmIntentServiceStatusReceived, GcmIntentService.INCOMING_MESSAGE_ERROR_NOT_FOUND_CONTACT);
+    }
+
     public void testBroadcastHermesGcmMessageHappyPath() throws Exception {
         Intent intent = new Intent(getContext(), GcmBroadcastReceiver.class);
         intent.setAction("com.google.android.c2dm.intent.RECEIVE");
@@ -157,6 +193,13 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
         intent.putExtras(extras);
         ComponentName comp = new ComponentName(getContext().getPackageName(), GcmBroadcastReceiver.class.getName());
         intent.setComponent(comp);
+
+        Contact contact = new Contact();
+        contact.setName("Micky Mouse");
+        contact.setGcmId("dummyGcmId");
+        Message message = new Message(message1);
+        contact.setPublicKeyEncoded(message.getBody().getSenderPublicKey());
+        contact = TestingUtils.persistContact(contact);
 
         getContext().sendOrderedBroadcast(intent, null);
 
@@ -174,7 +217,10 @@ public class GcmIntentServiceTest extends ServiceTestCase<GcmIntentService> {
         }
         Log.d(TAG, "wait time was " + (endWait - startWait) + " ms");
 
+        assertTrue("contact delete unsuccessful", TestingUtils.deleteContact(contact.getId()) == 1);
+
         assertTrue("incoming message status message did not arrive from GcmIntentService", didMessageStatusMessageArrive);
         assertTrue("incoming message status was not success", didMessageSuccess);
     }
+
 }

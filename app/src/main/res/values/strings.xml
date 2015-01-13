@@ -27,4 +27,7 @@
     <string name="gcm_sender_key">AIzaSyBByq5IBjxASCpzz6KggkXImbxWgs-7y9w</string>
     <string name="gcm_sender_id">323620638301</string>
     <string name="gcm_message_field_message">hermes_message</string>
+    <string name="no_messages_message">No Messages</string>
+    <string name="name_placeholder">Name Placeholder</string>
+    <string name="message_input_hint">Message</string>
 </resources>
