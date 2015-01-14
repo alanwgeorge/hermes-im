@@ -12,9 +12,6 @@ import com.alangeorge.android.hermes.model.Message;
 import java.security.KeyPair;
 import java.util.Date;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-
 public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
     private static final String TAG = "Hermes.MessageMakerTest";
 
@@ -71,7 +68,7 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
 
     // tests creating a Message which includes encryption and signing
     // verifies the message both before and after Json marshaling
-    // finaly decrypts the message and compares it to the original
+    // finally decrypts the message and compares it to the original
     public void testMakeMessage() throws Exception {
         Log.d(TAG, "testMakeMessage()");
         MessageMaker messageMaker = new MessageMaker();
@@ -93,24 +90,6 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
         assertTrue("new message failed to verifySignature() after Json marshalling", message.verifySignature());
 
         // now we attempt to retrieve our message
-
-        // decode the symmetricKey using receivers private key
-        byte[] symmetricKeyDecodedBytes;
-        Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
-        cipher.init(Cipher.DECRYPT_MODE, toKeyPair1.getPrivate());
-        symmetricKeyDecodedBytes = cipher.doFinal(Base64.decode(message.getBody().getMessageKey(), Base64.NO_WRAP));
-
-        // turn our decrypted bytes into a key
-        SecretKeySpec symmetricKeyFromMessage = new SecretKeySpec(symmetricKeyDecodedBytes, App.DEFAULT_AES_CIPHER);
-
-        // decrypt our message with our decrypted symmetric key
-        byte[] theTestTextInDecodedBytes;
-        cipher = Cipher.getInstance(App.DEFAULT_AES_CIPHER, App.DEFAULT_AES_SECURITY_PROVIDER);
-        cipher.init(Cipher.DECRYPT_MODE, symmetricKeyFromMessage);
-        theTestTextInDecodedBytes = cipher.doFinal(Base64.decode(message.getBody().getMessage(), Base64.NO_WRAP));
-
-        String receivedMessageText = new String(theTestTextInDecodedBytes, App.DEFAULT_CHARACTER_SET);
-
-        assertTrue("sent and received message not equal", receivedMessageText.equals(messageText));
+        assertTrue("sent and received message not equal", messageText.equals(message.getMessageClearText(toKeyPair1.getPrivate())));
     }
 }

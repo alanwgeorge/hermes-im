@@ -18,8 +18,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -72,6 +72,8 @@ public class ContactDetailFragment extends ListFragment implements View.OnClickL
         } else {
             isServiceBound = true;
         }
+
+        getActivity().setTitle(contact.getName());
     }
 
     @Override
@@ -103,10 +105,7 @@ public class ContactDetailFragment extends ListFragment implements View.OnClickL
 
         messageEditText = (EditText) view.findViewById(R.id.message_text);
 
-        TextView contactName = (TextView) view.findViewById(R.id.contact_name);
-        contactName.setText(contact.getName());
-
-        Button sendMessageButton = (Button) view.findViewById(R.id.send_button);
+        ImageButton sendMessageButton = (ImageButton) view.findViewById(R.id.send_button);
         sendMessageButton.setOnClickListener(this);
 
         fillConversationData();
@@ -118,6 +117,11 @@ public class ContactDetailFragment extends ListFragment implements View.OnClickL
     public void onClick(View v) {
         Log.d(TAG, "onClick()");
         Log.d(TAG, "message text = " + messageEditText.getText());
+
+        if (messageEditText.getText() == null || "".equals(messageEditText.getText().toString())) {
+            Toast.makeText(getActivity(), "Empty Message", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         if (messageSenderServiceMessenger == null) {
             Toast.makeText(getActivity(), "Unable to send messages, not bound to message sending service", Toast.LENGTH_LONG).show();
@@ -233,10 +237,20 @@ public class ContactDetailFragment extends ListFragment implements View.OnClickL
             //noinspection UnnecessaryLocalVariable
             View view = super.getView(position, convertView, parent);
 
+            TextView messageTextView = (TextView) view.findViewById(R.id.message_text);
+
+            String messageJson = messageTextView.getText().toString();
+
+            Message message = new Message(messageJson);
+
+            try {
+                messageTextView.setText(message.getMessageClearText(App.getMyKeyPair().getPrivate()));
+            } catch (Exception e) {
+                Log.e(TAG, "error while decrypting message", e);
+                Toast.makeText(getActivity(), "Unable to decrypt message:" + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+
             return view;
         }
-
     }
-
-
 }

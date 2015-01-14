@@ -1,10 +1,12 @@
 package com.alangeorge.android.hermes.model.provider;
 
 import android.content.ContentValues;
+import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.os.Handler;
 import android.test.ProviderTestCase2;
 import android.util.Log;
 
@@ -27,6 +29,8 @@ import java.net.URLEncoder;
 public class HermesContentProviderTest extends ProviderTestCase2<HermesContentProvider> {
     private static final String TAG = "Hermes.HermesContentProviderTest";
 
+    private ContentObserver contentObserver = new MessagesContactContentObserver(null);
+
     public HermesContentProviderTest() {
         super(HermesContentProvider.class, HermesContentProvider.AUTHORITY);
     }
@@ -34,10 +38,13 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
     public void setUp() throws Exception {
         super.setUp();
         Log.d(TAG, "setup()");
+        getContext().getContentResolver().registerContentObserver(HermesContentProvider.MESSAGES_CONTACT_CONTENT_URI, true, contentObserver);
     }
 
     public void tearDown() throws Exception {
         Log.d(TAG, "tearDown()");
+
+        getContext().getContentResolver().unregisterContentObserver(contentObserver);
 
         // Clean up DB
         DBHelper dbHelper = new DBHelper(getContext());
@@ -243,5 +250,18 @@ public class HermesContentProviderTest extends ProviderTestCase2<HermesContentPr
         messageValues.put(DBHelper.MESSAGE_COLUMN_MESSAGE_JSON, messageJson);
 
         return getContext().getContentResolver().insert(HermesContentProvider.MESSAGES_CONTENT_URI, messageValues);
+    }
+
+    private static class MessagesContactContentObserver extends ContentObserver {
+        private static final String TAG = "Hermes.MessagesContactContentObserver";
+        public MessagesContactContentObserver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            super.onChange(selfChange, uri);
+            Log.d(TAG, "onChange(" + selfChange + "," + uri + ")");
+        }
     }
 }
