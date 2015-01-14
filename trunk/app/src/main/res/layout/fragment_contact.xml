@@ -9,14 +9,6 @@
     tools:context="com.alangeorge.android.hermes.ContactDetailActivity.ContactDetailFragment"
     android:orientation="vertical">
 
-
-    <TextView
-        android:text="@string/name_placeholder"
-        android:id="@+id/contact_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"/>
-
     <ListView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -24,28 +16,37 @@
         android:dividerHeight="2dip"
         android:footerDividersEnabled="false"
         android:fastScrollEnabled="false"
-        android:layout_below="@id/contact_name"/>
-
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/message_send_container"/>
 
     <TextView
         android:id="@android:id/empty"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/no_messages_message"
-        android:layout_below="@id/contact_name"/>
+        android:layout_alignParentTop="true"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Send Message"
-        android:id="@+id/send_button"
-        android:layout_alignParentBottom="true"/>
-
-    <EditText
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/message_text"
-        android:layout_above="@id/send_button"
-        android:hint="@string/message_input_hint"/>
+        android:id="@+id/message_send_container"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/message_text"
+            android:layout_weight="4"
+            android:hint="@string/message_input_hint"/>
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="@drawable/ic_send"
+            android:id="@+id/send_button"
+            android:contentDescription="@string/button_message_send_label"/>
+    </LinearLayout>
 
 </RelativeLayout>

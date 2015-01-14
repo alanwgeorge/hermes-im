@@ -12,9 +12,18 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.util.Date;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 @SuppressWarnings("UnusedDeclaration")
 public class Message {
@@ -173,6 +182,24 @@ public class Message {
         }
 
         return false;
+    }
+
+    public String getMessageClearText(PrivateKey privateKey) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+        byte[] symmetricKeyDecodedBytes;
+        Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        symmetricKeyDecodedBytes = cipher.doFinal(Base64.decode(getBody().getMessageKey(), Base64.NO_WRAP));
+
+        // turn our decrypted bytes into a key
+        SecretKeySpec symmetricKeyFromMessage = new SecretKeySpec(symmetricKeyDecodedBytes, App.DEFAULT_AES_CIPHER);
+
+        // decrypt our message with our decrypted symmetric key
+        byte[] theTestTextInDecodedBytes;
+        cipher = Cipher.getInstance(App.DEFAULT_AES_CIPHER, App.DEFAULT_AES_SECURITY_PROVIDER);
+        cipher.init(Cipher.DECRYPT_MODE, symmetricKeyFromMessage);
+        theTestTextInDecodedBytes = cipher.doFinal(Base64.decode(getBody().getMessage(), Base64.NO_WRAP));
+
+        return new String(theTestTextInDecodedBytes, App.DEFAULT_CHARACTER_SET);
     }
 
     @Override

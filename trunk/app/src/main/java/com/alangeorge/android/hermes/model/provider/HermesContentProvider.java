@@ -82,6 +82,7 @@ public class HermesContentProvider extends ContentProvider {
                 values.put(DBHelper.CONTACT_COLUMN_CREATE_TIME, new Date().getTime());
                 id = sqlDB.insertOrThrow(DBHelper.TABLE_CONTACT, null, values);
                 getContext().getContentResolver().notifyChange(CONTACTS_CONTENT_URI, null);
+                getContext().getContentResolver().notifyChange(MESSAGES_CONTACT_CONTENT_URI, null);
                 result = id == -1 ? null : Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH + "/" + id);
                 break;
             case MESSAGES_ALL:
@@ -89,6 +90,7 @@ public class HermesContentProvider extends ContentProvider {
                 values.put(DBHelper.MESSAGE_COLUMN_READ_TIME, -1); // == not read
                 id = sqlDB.insertOrThrow(DBHelper.TABLE_MESSAGE, null, values);
                 getContext().getContentResolver().notifyChange(MESSAGES_CONTENT_URI, null);
+                getContext().getContentResolver().notifyChange(MESSAGES_CONTACT_CONTENT_URI, null);
                 result = id == -1 ? null : Uri.parse("content://" + AUTHORITY + "/" + MESSAGES_PATH + "/" + id);
                 break;
             default:
