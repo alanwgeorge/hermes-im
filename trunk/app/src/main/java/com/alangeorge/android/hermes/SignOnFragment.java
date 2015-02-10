@@ -21,7 +21,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class SignOnFragment extends Fragment {
-    private static final String TAG = "Hermes.SignOnFragment";
+    private static final String TAG = "SignOnFragment";
 
     private TextView passwordView;
 

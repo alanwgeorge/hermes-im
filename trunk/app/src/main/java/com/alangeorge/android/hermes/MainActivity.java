@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.security.KeyPair;
 
 public class MainActivity extends ActionBarActivity {
-    private static final String TAG = "Hermes.MainActivity";
+    private static final String TAG = "MainActivity";
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
 
     private GoogleCloudMessaging gcm;

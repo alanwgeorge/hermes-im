@@ -31,4 +31,5 @@
     <string name="name_placeholder">Name Placeholder</string>
     <string name="message_input_hint">Message</string>
     <string name="button_message_send_label">Send</string>
+    <string name="action_delete_conversation">Delete Conversation</string>
 </resources>

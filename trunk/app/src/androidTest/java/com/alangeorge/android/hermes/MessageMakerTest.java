@@ -13,7 +13,7 @@ import java.security.KeyPair;
 import java.util.Date;
 
 public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
-    private static final String TAG = "Hermes.MessageMakerTest";
+    private static final String TAG = "MessageMakerTest";
 
     private static final String fromKeyPairAlias = "test_from_alias";
     private static final String toKeyPairAlias = "test_to_alias";
@@ -77,6 +77,9 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
 
         Message message = messageMaker.make(messageText, contact1, gcmId, fromKeyPair1);
 
+        // decode message with sender key
+        assertTrue("sent and received message not equal, outbound decoding", messageText.equals(message.getOutboundMessageClearText(fromKeyPair1.getPrivate())));
+
         assertTrue("message failed to verifySignature()", message.verifySignature());
 
         String messageJson = message.toJson();
@@ -90,6 +93,6 @@ public class MessageMakerTest extends ActivityUnitTestCase<MainActivity> {
         assertTrue("new message failed to verifySignature() after Json marshalling", message.verifySignature());
 
         // now we attempt to retrieve our message
-        assertTrue("sent and received message not equal", messageText.equals(message.getMessageClearText(toKeyPair1.getPrivate())));
+        assertTrue("sent and received message not equal, inbound decoding", messageText.equals(message.getInboundMessageClearText(toKeyPair1.getPrivate())));
     }
 }

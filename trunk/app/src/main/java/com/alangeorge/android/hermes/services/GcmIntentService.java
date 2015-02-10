@@ -29,7 +29,7 @@ import java.util.Set;
 
 public class GcmIntentService extends IntentService {
     public static final int NOTIFICATION_ID = 1;
-    private static final String TAG = "Hermes.GcmIntentService";
+    private static final String TAG = "GcmIntentService";
     public static final String ACTION_INCOMING_MESSAGE_STATUS = "action_incoming_message_status";
     public static final String ARG_INCOMING_MESSAGE_STATUS = "arg_incoming_message_status";
     public static final String ARG_INCOMING_MESSAGE = "arg_incoming_message";
@@ -63,7 +63,6 @@ public class GcmIntentService extends IntentService {
                     // If it's a regular GCM message, do some work.
                     break;
                 case GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE:
-                    // Post notification of received message.
 
                     Set<String> bundleKeys = extras.keySet();
                     for (String key : bundleKeys) {
@@ -150,8 +149,10 @@ public class GcmIntentService extends IntentService {
             return statusBroadcastIntent;
         }
 
+        // insert message
         ContentValues messageValues = new ContentValues();
         messageValues.put(DBHelper.MESSAGE_COLUMN_CONTACT_ID, message.getContact().getId());
+        messageValues.put(DBHelper.MESSAGE_COLUMN_IS_INBOUND, true);
         messageValues.put(DBHelper.MESSAGE_COLUMN_MESSAGE_JSON, messageJson);
 
         getContentResolver().insert(HermesContentProvider.MESSAGES_CONTENT_URI, messageValues);

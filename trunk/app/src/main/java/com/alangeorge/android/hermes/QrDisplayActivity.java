@@ -31,7 +31,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
  * @see SystemUiHider
  */
 public class QrDisplayActivity extends Activity {
-    private static final String TAG = "Hermes.QrDisplayActivity";
+    private static final String TAG = "QrDisplayActivity";
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.

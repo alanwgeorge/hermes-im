@@ -26,10 +26,10 @@ import java.util.Map;
  * </pre>
  */
 public class DBHelper extends SQLiteOpenHelper {
-    private static final String TAG = "Hermes.DBHelper";
+    private static final String TAG = "DBHelper";
 
     private static final String DATABASE_NAME = "hermes.db";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 5;
 
     // contact Table
     public static final String TABLE_CONTACT = "contact";
@@ -57,7 +57,9 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String TABLE_MESSAGE = "message";
     public static final String INDEX_MESSAGE_CONTACT_ID = "contact_id_index";
     public static final String MESSAGE_COLUMN_ID = "_id";
+    public static final String MESSAGE_COLUMN_IS_INBOUND = "is_inbound";
     public static final String MESSAGE_COLUMN_CONTACT_ID = "contact_id";
+    public static final String MESSAGE_COLUMN_SENDER_ENCODED_KEY = "sender_encoded_key";
     public static final String MESSAGE_COLUMN_MESSAGE_JSON = "message_json";
     public static final String MESSAGE_COLUMN_READ_TIME = "read_time"; // -1 == not yet read
     @SuppressWarnings("SpellCheckingInspection")
@@ -65,16 +67,19 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static final String[] MESSAGE_ALL_COLUMNS = {
             MESSAGE_COLUMN_ID, // 0
-            MESSAGE_COLUMN_CONTACT_ID, // 1
-            MESSAGE_COLUMN_MESSAGE_JSON, // 2
-            MESSAGE_COLUMN_READ_TIME, // 3
-            MESSAGE_COLUMN_CREATE_TIME // 4
+            MESSAGE_COLUMN_IS_INBOUND, // 1
+            MESSAGE_COLUMN_CONTACT_ID, // 2
+            MESSAGE_COLUMN_SENDER_ENCODED_KEY, // 3
+            MESSAGE_COLUMN_MESSAGE_JSON, // 4
+            MESSAGE_COLUMN_READ_TIME, // 5
+            MESSAGE_COLUMN_CREATE_TIME // 6
     };
 
     private static final String MESSAGE_TABLE_CREATE = "create table " + TABLE_MESSAGE + " (" + MESSAGE_COLUMN_ID
-            + " integer primary key autoincrement, " + MESSAGE_COLUMN_CONTACT_ID + " integer not null, " + MESSAGE_COLUMN_MESSAGE_JSON
-            + " text not null, " + MESSAGE_COLUMN_READ_TIME + " integer, " + MESSAGE_COLUMN_CREATE_TIME + " integer not null, foreign key("
-            + MESSAGE_COLUMN_CONTACT_ID + ") references " + TABLE_CONTACT + "(" + CONTACT_COLUMN_ID + ") on delete cascade);";
+            + " integer primary key autoincrement, " + MESSAGE_COLUMN_IS_INBOUND + " integer not null, " + MESSAGE_COLUMN_CONTACT_ID + " integer not null, "
+            + MESSAGE_COLUMN_SENDER_ENCODED_KEY + " text, " + MESSAGE_COLUMN_MESSAGE_JSON + " text not null, " + MESSAGE_COLUMN_READ_TIME + " integer, "
+            + MESSAGE_COLUMN_CREATE_TIME + " integer not null, foreign key(" + MESSAGE_COLUMN_CONTACT_ID + ") references " + TABLE_CONTACT
+            + "(" + CONTACT_COLUMN_ID + ") on delete cascade);";
 
     public static final String MESSAGE_INDEX_CONTACT_ID_CREATE = "create index " + INDEX_MESSAGE_CONTACT_ID + " on " + TABLE_MESSAGE + "(" + MESSAGE_COLUMN_CONTACT_ID + ");";
 
@@ -83,7 +88,9 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String CONTACT_PREFIX = "c";
 
     public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_ID = MESSAGE_COLUMN_ID;
+    public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_IS_INBOUND = MESSAGE_COLUMN_IS_INBOUND;
     public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_CONTACT_ID = MESSAGE_COLUMN_CONTACT_ID;
+    public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_SENDER_ENCODED_KEY = MESSAGE_COLUMN_SENDER_ENCODED_KEY;
     public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_MESSAGE_JSON = MESSAGE_COLUMN_MESSAGE_JSON;
     public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_READ_TIME = MESSAGE_COLUMN_READ_TIME;
     public static final String MESSAGE_CONTACT_COLUMN_MESSAGE_CREATE_TIME = MESSAGE_COLUMN_CREATE_TIME;
@@ -97,12 +104,13 @@ public class DBHelper extends SQLiteOpenHelper {
             + TABLE_CONTACT + " " + CONTACT_PREFIX + " ON (" + MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CONTACT_ID
             + " = " + CONTACT_PREFIX + "." + CONTACT_COLUMN_ID + ")";
 
-    //SELECT m._id as _id, m.contact_id as contact_id, m.message_json as message_json, m.read_time as read_time, m.createtime as createtime, c._id as c_c_id, c.name as c_name, c.public_key as c_public_key, c.gcm_id as c_gcm_id, c.createtime as c_createtime FROM message m INNER JOIN contact c ON (m.contact_id = c._id) WHERE (contact_id=1)
     public static final Map<String, String > MESSAGE_CONTACT_JOIN_PROJECTION_MAP;
     static {
         MESSAGE_CONTACT_JOIN_PROJECTION_MAP = new HashMap<>();
         MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_CONTACT_COLUMN_MESSAGE_ID, MESSAGE_PREFIX + "." + MESSAGE_COLUMN_ID + " as " + MESSAGE_COLUMN_ID);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_CONTACT_COLUMN_MESSAGE_IS_INBOUND, MESSAGE_PREFIX + "." + MESSAGE_COLUMN_IS_INBOUND + " as " + MESSAGE_COLUMN_IS_INBOUND);
         MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_CONTACT_COLUMN_MESSAGE_CONTACT_ID, MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CONTACT_ID + " as " + MESSAGE_COLUMN_CONTACT_ID);
+        MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_CONTACT_COLUMN_MESSAGE_SENDER_ENCODED_KEY, MESSAGE_PREFIX + "." + MESSAGE_COLUMN_SENDER_ENCODED_KEY + " as " + MESSAGE_COLUMN_SENDER_ENCODED_KEY);
         MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_CONTACT_COLUMN_MESSAGE_MESSAGE_JSON, MESSAGE_PREFIX + "." + MESSAGE_COLUMN_MESSAGE_JSON + " as " + MESSAGE_COLUMN_MESSAGE_JSON);
         MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_CONTACT_COLUMN_MESSAGE_READ_TIME, MESSAGE_PREFIX + "." + MESSAGE_COLUMN_READ_TIME + " as " + MESSAGE_COLUMN_READ_TIME);
         MESSAGE_CONTACT_JOIN_PROJECTION_MAP.put(MESSAGE_CONTACT_COLUMN_MESSAGE_CREATE_TIME, MESSAGE_PREFIX + "." + MESSAGE_COLUMN_CREATE_TIME + " as " + MESSAGE_COLUMN_CREATE_TIME);
@@ -116,15 +124,16 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String[] MESSAGE_CONTACT_ALL_COLUMNS = {
             MESSAGE_CONTACT_COLUMN_MESSAGE_ID, // 0
             MESSAGE_CONTACT_COLUMN_MESSAGE_CONTACT_ID, // 1
-            MESSAGE_CONTACT_COLUMN_MESSAGE_MESSAGE_JSON, // 2
-            MESSAGE_CONTACT_COLUMN_MESSAGE_READ_TIME, // 3
-            MESSAGE_CONTACT_COLUMN_MESSAGE_CREATE_TIME, // 4
-            MESSAGE_CONTACT_COLUMN_CONTACT_ID, // 5
-            MESSAGE_CONTACT_COLUMN_CONTACT_NAME, // 6
-            MESSAGE_CONTACT_COLUMN_CONTACT_PUBLIC_KEY, // 7
-            MESSAGE_CONTACT_COLUMN_CONTACT_GCM_ID, // 8
-            MESSAGE_CONTACT_COLUMN_CONTACT_CREATE_TIME // 9
-
+            MESSAGE_CONTACT_COLUMN_MESSAGE_IS_INBOUND, // 2
+            MESSAGE_CONTACT_COLUMN_MESSAGE_SENDER_ENCODED_KEY, // 3
+            MESSAGE_CONTACT_COLUMN_MESSAGE_MESSAGE_JSON, // 4
+            MESSAGE_CONTACT_COLUMN_MESSAGE_READ_TIME, // 5
+            MESSAGE_CONTACT_COLUMN_MESSAGE_CREATE_TIME, // 6
+            MESSAGE_CONTACT_COLUMN_CONTACT_ID, // 7
+            MESSAGE_CONTACT_COLUMN_CONTACT_NAME, // 8
+            MESSAGE_CONTACT_COLUMN_CONTACT_PUBLIC_KEY, // 9
+            MESSAGE_CONTACT_COLUMN_CONTACT_GCM_ID, // 10
+            MESSAGE_CONTACT_COLUMN_CONTACT_CREATE_TIME // 11
     };
 
     public DBHelper(Context context) {

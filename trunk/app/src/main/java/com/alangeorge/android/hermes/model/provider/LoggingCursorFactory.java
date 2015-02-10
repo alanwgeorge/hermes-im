@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteQuery;
 import android.util.Log;
 
 public class LoggingCursorFactory implements SQLiteDatabase.CursorFactory {
-    private static final String TAG = "Hermes.LoggingCursorFactory";
+    private static final String TAG = "LoggingCursorFactory";
     @Override
     public Cursor newCursor(SQLiteDatabase db, SQLiteCursorDriver masterQuery, String editTable, SQLiteQuery query) {
         Log.d(TAG, "query:" + query.toString());

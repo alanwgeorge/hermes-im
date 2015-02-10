@@ -6,12 +6,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class ContactDetailActivity extends ActionBarActivity {
+public class ConversationActivity extends ActionBarActivity {
     @SuppressWarnings("UnusedDeclaration")
-    private static final String TAG = "Hermes.ContactDetailActivity";
+    private static final String TAG = "ConversationActivity";
     public static final String ARG_ITEM_ID = "arg_item_id";
 
-    private ContactDetailFragment fragment = new ContactDetailFragment();
+    private ConversationFragment fragment = new ConversationFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +33,7 @@ public class ContactDetailActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.contact_detail, menu);
+        getMenuInflater().inflate(R.menu.conversation, menu);
         return true;
     }
 
@@ -48,6 +48,9 @@ public class ContactDetailActivity extends ActionBarActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
+                return true;
+            case R.id.action_delete_conversation:
+                fragment.deleteConversation();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

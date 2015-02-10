@@ -20,7 +20,7 @@ import com.google.android.gcm.server.Sender;
 import java.io.IOException;
 
 public class MessageSenderService extends Service {
-    private static final String TAG = "Hermes.MessageSenderService";
+    private static final String TAG = "MessageSenderService";
 
     public static final int MSG_SEND_MESSAGE = 0;
     public static final int MSG_SEND_SUCCESS = 1;

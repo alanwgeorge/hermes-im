@@ -60,7 +60,7 @@
             android:theme="@style/FullscreenTheme" >
         </activity>
         <activity
-            android:name=".ContactDetailActivity"
+            android:name=".ConversationActivity"
             android:label="@string/title_activity_contact"
             android:parentActivityName=".MainActivity" >
         </activity>
