@@ -13,7 +13,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 
 public class MessageMaker {
-    private static final String TAG = "Hermes.MessageMaker";
+    private static final String TAG = "MessageMaker";
 
     /**
      * Constructs a {@link com.alangeorge.android.hermes.model.Message} that is ready to be sent
@@ -47,16 +47,29 @@ public class MessageMaker {
         body.setMessage(Base64.encodeToString(theTestTextInEncodedBytes, Base64.NO_WRAP));
 
         // encode symmetricKey with receivers public key
-        byte[] symmetricKeyEncodedBytes;
+        byte[] symmetricKeyEncodedReceiverBytes;
         try {
             Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
             cipher.init(Cipher.ENCRYPT_MODE, to.getPublicKey());
-            symmetricKeyEncodedBytes = cipher.doFinal(symmetricKey.getEncoded());
+            symmetricKeyEncodedReceiverBytes = cipher.doFinal(symmetricKey.getEncoded());
         } catch (Exception e) {
             throw new MessageMakerException(e);
         }
 
-        body.setMessageKey(Base64.encodeToString(symmetricKeyEncodedBytes, Base64.NO_PADDING));
+        body.setReceiverEncodedSymKey(Base64.encodeToString(symmetricKeyEncodedReceiverBytes, Base64.NO_PADDING));
+
+        // encode symmetricKey with senders public key
+        byte[] symmetricKeyEncodedSenderBytes;
+        try {
+            Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
+            cipher.init(Cipher.ENCRYPT_MODE, fromKeyPair.getPublic());
+            symmetricKeyEncodedSenderBytes = cipher.doFinal(symmetricKey.getEncoded());
+        } catch (Exception e) {
+            throw new MessageMakerException(e);
+        }
+
+        message.setSenderEncodedSymKey(Base64.encodeToString(symmetricKeyEncodedSenderBytes, Base64.NO_PADDING));
+
         message.setBody(body);
         message.sign(fromKeyPair.getPrivate());
 
@@ -70,9 +83,9 @@ public class MessageMaker {
     private SecretKeySpec generateSymmetricKey() throws MessageMakerException {
         SecretKeySpec secretKeySpec;
         try {
-            KeyGenerator kg = KeyGenerator.getInstance("AES");
-            kg.init(256, App.secureRandom);
-            secretKeySpec = new SecretKeySpec((kg.generateKey()).getEncoded(), "AES");
+            KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+            keyGenerator.init(256, App.secureRandom);
+            secretKeySpec = new SecretKeySpec((keyGenerator.generateKey()).getEncoded(), "AES");
         } catch (Exception e) {
             throw new MessageMakerException(e);
         }

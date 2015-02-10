@@ -23,7 +23,7 @@ import java.util.Date;
 import javax.security.auth.x500.X500Principal;
 
 public class App extends Application {
-    private static final String TAG = "Hermes.App";
+    private static final String TAG = "App";
     private static final String PROPERTY_GCM_REG_ID = "gcm_registration_id";
     private static final String PROPERTY_APP_VERSION = "app_version";
     private static final String PROPERTY_PASSWORD_HASH = "password_hash";

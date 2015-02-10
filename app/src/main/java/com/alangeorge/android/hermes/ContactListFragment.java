@@ -36,7 +36,7 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 public class ContactListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
-    private static final String TAG = "Hermes.ContactListFragment";
+    private static final String TAG = "ContactListFragment";
 
     private SimpleCursorAdapter adapter;
 
@@ -104,8 +104,8 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
 
         Log.d(TAG, "contact from view = " + contact);
 
-        Intent detailIntent = new Intent(getActivity(), ContactDetailActivity.class);
-        detailIntent.putExtra(ContactDetailActivity.ARG_ITEM_ID, contact.getId());
+        Intent detailIntent = new Intent(getActivity(), ConversationActivity.class);
+        detailIntent.putExtra(ConversationActivity.ARG_ITEM_ID, contact.getId());
         startActivity(detailIntent);
     }
 
@@ -247,7 +247,7 @@ public class ContactListFragment extends ListFragment implements LoaderManager.L
     }
 
     private static class ContactCursorAdapter extends SimpleCursorAdapter {
-        private static final String TAG = "Hermes.ContactCursorAdapter";
+        private static final String TAG = "ContactCursorAdapter";
         private Context context;
 
         public ContactCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to, int flags) {

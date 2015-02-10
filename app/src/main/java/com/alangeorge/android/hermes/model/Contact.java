@@ -20,7 +20,7 @@ import java.util.Date;
 
 @SuppressWarnings("UnusedDeclaration")
 public class Contact {
-    private static final String TAG = "Hermes.Contact";
+    private static final String TAG = "Contact";
 
     private long id;
     @Expose

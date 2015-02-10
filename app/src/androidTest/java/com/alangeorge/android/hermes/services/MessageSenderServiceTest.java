@@ -11,7 +11,7 @@ import android.util.Log;
 import com.alangeorge.android.hermes.App;
 
 public class MessageSenderServiceTest extends ServiceTestCase<MessageSenderService> {
-    private static final String TAG = "Hermes.MessageSenderServiceTest";
+    private static final String TAG = "MessageSenderServiceTest";
 
     // Service will send messages about send status to this messenger
     private Messenger messageSenderServiceTestMessenger = new Messenger(new MessageSenderServiceInboundMessageHandler());

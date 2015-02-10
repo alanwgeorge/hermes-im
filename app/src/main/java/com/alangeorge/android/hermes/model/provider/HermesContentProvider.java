@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.HashSet;
 
 public class HermesContentProvider extends ContentProvider {
-    private static final String TAG = "Hermes.HermesContentProvider";
+    private static final String TAG = "HermesContentProvider";
 
     // used for the UriMatcher
     public static final int CONTACTS_ALL = 10;
@@ -86,6 +86,12 @@ public class HermesContentProvider extends ContentProvider {
                 result = id == -1 ? null : Uri.parse("content://" + AUTHORITY + "/" + CONTACTS_PATH + "/" + id);
                 break;
             case MESSAGES_ALL:
+                if (values.getAsBoolean(DBHelper.MESSAGE_COLUMN_IS_INBOUND)) {
+                    values.put(DBHelper.MESSAGE_COLUMN_IS_INBOUND, 0);
+                } else {
+                    values.put(DBHelper.MESSAGE_COLUMN_IS_INBOUND, 1);
+                }
+
                 values.put(DBHelper.MESSAGE_COLUMN_CREATE_TIME, new Date().getTime());
                 values.put(DBHelper.MESSAGE_COLUMN_READ_TIME, -1); // == not read
                 id = sqlDB.insertOrThrow(DBHelper.TABLE_MESSAGE, null, values);
@@ -170,6 +176,10 @@ public class HermesContentProvider extends ContentProvider {
             case CONTACT_BY_ID:
                 String contactId = uri.getLastPathSegment();
                 rowsDeleted = sqlDB.delete(DBHelper.TABLE_CONTACT, DBHelper.CONTACT_COLUMN_ID + "=" + contactId, null);
+                break;
+            case MESSAGES_CONTACT_BY_ID:
+                String messagesContactById = uri.getLastPathSegment();
+                rowsDeleted = sqlDB.delete(DBHelper.TABLE_MESSAGE, DBHelper.MESSAGE_COLUMN_CONTACT_ID + "=" + messagesContactById, null);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI: " + uri);

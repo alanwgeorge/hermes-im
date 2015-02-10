@@ -27,7 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 @SuppressWarnings("UnusedDeclaration")
 public class Message {
-    private static final String TAG = "Hermes.Message";
+    private static final String TAG = "Message";
 
     private Gson gson;
 
@@ -37,9 +37,11 @@ public class Message {
     private Body body;
 
     private long id;
+    private boolean isInbound;
     private long contactId;
     private Date createTime;
     private Date readTime;
+    private String senderEncodedSymKey;
     private Contact contact;
 
     public Message() {
@@ -90,6 +92,14 @@ public class Message {
         this.id = id;
     }
 
+    public boolean isInbound() {
+        return isInbound;
+    }
+
+    public void setInbound(boolean isInbound) {
+        this.isInbound = isInbound;
+    }
+
     // contact.getId() is canonical
     public long getContactId() {
         return contact != null ? contact.getId() : contactId;
@@ -119,6 +129,14 @@ public class Message {
         this.readTime = readTime;
     }
 
+    public String getSenderEncodedSymKey() {
+        return senderEncodedSymKey;
+    }
+
+    public void setSenderEncodedSymKey(String senderEncodedSymKey) {
+        this.senderEncodedSymKey = senderEncodedSymKey;
+    }
+
     public Contact getContact() {
         return contact;
     }
@@ -141,7 +159,7 @@ public class Message {
             secretKeySigner.initSign(senderPrivateKey);
             secretKeySigner.update(body.getGcmRegistrationId().getBytes());
             secretKeySigner.update(body.getSenderPublicKey().getBytes());
-            secretKeySigner.update(body.getMessageKey().getBytes());
+            secretKeySigner.update(body.getReceiverEncodedSymKey().getBytes());
             secretKeySigner.update(body.getMessage().getBytes());
 
             signature = Base64.encodeToString(secretKeySigner.sign(), Base64.NO_WRAP);
@@ -170,7 +188,7 @@ public class Message {
             secretKeyVerifier.initVerify(Contact.decodePublicKey(body.getSenderPublicKey()));
             secretKeyVerifier.update(body.getGcmRegistrationId().getBytes());
             secretKeyVerifier.update(body.getSenderPublicKey().getBytes());
-            secretKeyVerifier.update(body.getMessageKey().getBytes());
+            secretKeyVerifier.update(body.getReceiverEncodedSymKey().getBytes());
             secretKeyVerifier.update(body.getMessage().getBytes());
             return secretKeyVerifier.verify(Base64.decode(signature, Base64.NO_WRAP));
 
@@ -184,22 +202,34 @@ public class Message {
         return false;
     }
 
-    public String getMessageClearText(PrivateKey privateKey) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+    public String getInboundMessageClearText(PrivateKey privateKey) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
         byte[] symmetricKeyDecodedBytes;
         Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        symmetricKeyDecodedBytes = cipher.doFinal(Base64.decode(getBody().getMessageKey(), Base64.NO_WRAP));
+        symmetricKeyDecodedBytes = cipher.doFinal(Base64.decode(getBody().getReceiverEncodedSymKey(), Base64.NO_WRAP));
 
-        // turn our decrypted bytes into a key
+        return getMessageClearText(symmetricKeyDecodedBytes);
+    }
+
+    public String getOutboundMessageClearText(PrivateKey privateKey) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+        byte[] symmetricKeyDecodedBytes;
+        Cipher cipher = Cipher.getInstance(App.DEFAULT_RSA_CIPHER, App.DEFAULT_RSA_SECURITY_PROVIDER);
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        symmetricKeyDecodedBytes = cipher.doFinal(Base64.decode(getSenderEncodedSymKey(), Base64.NO_WRAP));
+
+        return getMessageClearText(symmetricKeyDecodedBytes);
+    }
+
+    private String getMessageClearText(byte[] symmetricKeyDecodedBytes) throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         SecretKeySpec symmetricKeyFromMessage = new SecretKeySpec(symmetricKeyDecodedBytes, App.DEFAULT_AES_CIPHER);
 
         // decrypt our message with our decrypted symmetric key
-        byte[] theTestTextInDecodedBytes;
-        cipher = Cipher.getInstance(App.DEFAULT_AES_CIPHER, App.DEFAULT_AES_SECURITY_PROVIDER);
+        byte[] decodedBytes;
+        Cipher cipher = Cipher.getInstance(App.DEFAULT_AES_CIPHER, App.DEFAULT_AES_SECURITY_PROVIDER);
         cipher.init(Cipher.DECRYPT_MODE, symmetricKeyFromMessage);
-        theTestTextInDecodedBytes = cipher.doFinal(Base64.decode(getBody().getMessage(), Base64.NO_WRAP));
+        decodedBytes = cipher.doFinal(Base64.decode(getBody().getMessage(), Base64.NO_WRAP));
 
-        return new String(theTestTextInDecodedBytes, App.DEFAULT_CHARACTER_SET);
+        return new String(decodedBytes, App.DEFAULT_CHARACTER_SET);
     }
 
     @Override
@@ -208,9 +238,11 @@ public class Message {
                 "signature='" + signature + '\'' +
                 ", body=" + body +
                 ", id=" + id +
+                ", isInbound=" + isInbound +
                 ", contactId=" + contactId +
                 ", createTime=" + createTime +
                 ", readTime=" + readTime +
+                ", senderEncodedSymKey='" + senderEncodedSymKey + '\'' +
                 ", contact=" + contact +
                 '}';
     }
@@ -257,19 +289,21 @@ public class Message {
         if (cursor != null && cursor.getCount() > 0) {
             try {
                 setId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[0])));
-                setContactId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[1])));
-                Message temp = new Message(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[2])));
+                setInbound(cursor.getInt(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[1])) == 0);
+                setContactId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[2])));
+                setSenderEncodedSymKey(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[3])));
+                Message temp = new Message(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[4])));
                 setSignature(temp.getSignature());
                 setBody(temp.getBody());
-                setReadTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[3]))));
-                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[4]))));
-                if (cursor.getColumnCount() > 5) { // this is a messages/contact join
+                setReadTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[5]))));
+                setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_ALL_COLUMNS[6]))));
+                if (cursor.getColumnCount() > 7) { // this is a messages/contact join
                     Contact contact = new Contact();
-                    contact.setId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[5])));
-                    contact.setName(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[6])));
-                    contact.setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[7])));
-                    contact.setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[8])));
-                    contact.setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[9]))));
+                    contact.setId(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[7])));
+                    contact.setName(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[8])));
+                    contact.setPublicKeyEncoded(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[9])));
+                    contact.setGcmId(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[10])));
+                    contact.setCreateTime(new Date(cursor.getLong(cursor.getColumnIndexOrThrow(DBHelper.MESSAGE_CONTACT_ALL_COLUMNS[11]))));
                     setContact(contact);
                 }
             } catch (Exception e) {
@@ -292,7 +326,7 @@ public class Message {
         }
 
         Message message = new Message();
-        message.load(cursor, true);
+        message.load(cursor, false);
 
         return message;
     }
@@ -303,7 +337,7 @@ public class Message {
         @Expose
         private String senderPublicKey;
         @Expose
-        private String messageKey;
+        private String receiverEncodedSymKey;
         @Expose
         private String message;
 
@@ -323,12 +357,12 @@ public class Message {
             this.senderPublicKey = publicKey;
         }
 
-        public String getMessageKey() {
-            return messageKey;
+        public String getReceiverEncodedSymKey() {
+            return receiverEncodedSymKey;
         }
 
-        public void setMessageKey(String messageKey) {
-            this.messageKey = messageKey;
+        public void setReceiverEncodedSymKey(String receiverEncodedSymKey) {
+            this.receiverEncodedSymKey = receiverEncodedSymKey;
         }
 
         public String getMessage() {
@@ -344,7 +378,7 @@ public class Message {
             return "Body{" +
                     "gcmRegistrationId='" + gcmRegistrationId + '\'' +
                     ", senderPublicKey='" + senderPublicKey + '\'' +
-                    ", messageKey='" + messageKey + '\'' +
+                    ", receiverEncodedSymKey='" + receiverEncodedSymKey + '\'' +
                     ", message='" + message + '\'' +
                     '}';
         }
