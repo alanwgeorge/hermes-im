@@ -16,9 +16,10 @@ Work in progress, currently can register new contacts with QR code scan and can 
 * Message Signature (SHA512withRSA): ensure message originated from specific key pair
  
 ## Overview of Message Send Sequence
+Click image for larger view.
 ![Overview of Message Send Sequence](docs/Hermes-Overview-Message-Send.png?raw=true  "Overview")
 
-## Screenshot
+## Screenshots
 ![Screenshot conversation](screenshots/Conversation.png?raw=true  "Conversation")
 ![Screenshot sign on](screenshots/SignOn.png?raw=true  "Sign on")
 
