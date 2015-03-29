@@ -23,6 +23,7 @@ Work in progress, currently can register new contacts with QR code scan and can 
 ![Screenshot sign on](screenshots/SignOn.png?raw=true  "Sign on")
 
 ## TODO
+* Security review
 * Delete contact(s)
 * Unread messages on contact list not reading data store
 * Conversation UI need a design
