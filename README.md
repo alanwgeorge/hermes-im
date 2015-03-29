@@ -10,7 +10,7 @@ Work in progress, currently can register new contacts with QR code scan and can 
 * [AndroidKeyStore](https://developer.android.com/training/articles/keystore.html): To store the user's [KeyPair](http://developer.android.com/reference/java/security/KeyPair.html)
 * [ZXing](https://github.com/zxing/zxing/): Coding and decoding QR codes into contacts for exchanging contact addresses
 * gcm-server.jar: used to send push messages device to device
-* ContentProvider/SQLite: persist contacts and messages, messages stored encrypted
+* [ContentProvider](http://developer.android.com/guide/topics/providers/content-providers.html)/[SQLite](http://developer.android.com/reference/android/database/sqlite/SQLiteDatabase.html): persist contacts and messages, messages stored encrypted
 * Symmetric Encryption (AES): used encrypt/decrypt message text
 * Asymmetric Encryption (RSA): used to encrypt/decrypt symmetric key with public/private key pair
 * Message Signature (SHA512withRSA): ensure message originated from specific key pair
