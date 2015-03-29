@@ -5,9 +5,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.security.KeyPairGeneratorSpec;
-import android.util.Log;
 
 import java.math.BigInteger;
 import java.nio.charset.Charset;
@@ -22,8 +22,9 @@ import java.util.Date;
 
 import javax.security.auth.x500.X500Principal;
 
+import timber.log.Timber;
+
 public class App extends Application {
-    private static final String TAG = "App";
     private static final String PROPERTY_GCM_REG_ID = "gcm_registration_id";
     private static final String PROPERTY_APP_VERSION = "app_version";
     private static final String PROPERTY_PASSWORD_HASH = "password_hash";
@@ -40,11 +41,26 @@ public class App extends Application {
     public static final SecureRandom secureRandom;
 
     static {
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .penaltyDialog()
+                    .build());
+            StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog()
+                    .build());
+            Timber.plant(new Timber.DebugTree());
+        } else {
+            Timber.plant(new Timber.HollowTree());
+        }
+
         SecureRandom temp = null;
         try {
             temp = SecureRandom.getInstance("SHA1PRNG", DEFAULT_RSA_SECURITY_PROVIDER);
         } catch (Exception e) {
-            Log.e(TAG, "Unable to initialize SecureRandom", e);
+            Timber.e("Unable to initialize SecureRandom", e);
             throw new IllegalArgumentException("Unable to initialize SecureRandom", e);
         } finally {
             secureRandom = temp;
@@ -58,7 +74,7 @@ public class App extends Application {
      */
     @Override
     public void onCreate() {
-        Log.d(TAG, "onCreate()");
+        Timber.d("onCreate()");
         super.onCreate();
         context = getApplicationContext();
 
@@ -92,7 +108,7 @@ public class App extends Application {
         SharedPreferences prefs = getPreferences();
         String registrationId = prefs.getString(PROPERTY_GCM_REG_ID, "");
         if (registrationId.isEmpty()) {
-            Log.i(TAG, "Registration not found.");
+            Timber.i("Registration not found.");
             return "";
         }
         // Check if app was updated; if so, it must clear the registration ID
@@ -101,7 +117,7 @@ public class App extends Application {
         int registeredVersion = prefs.getInt(PROPERTY_APP_VERSION, Integer.MIN_VALUE);
         int currentVersion = getAppVersion();
         if (registeredVersion != currentVersion) {
-            Log.i(TAG, "App version changed.");
+            Timber.i("App version changed.");
             return "";
         }
         return registrationId;
@@ -121,7 +137,7 @@ public class App extends Application {
     public static void storeRegistrationId(String gcmRegistrationId) {
         SharedPreferences prefs = getPreferences();
         int appVersion = getAppVersion();
-        Log.i(TAG, "Saving regId on app version " + appVersion);
+        Timber.i( "Saving regId on app version " + appVersion);
         SharedPreferences.Editor editor = prefs.edit();
         editor.putString(PROPERTY_GCM_REG_ID, gcmRegistrationId);
         editor.putInt(PROPERTY_APP_VERSION, appVersion);
@@ -144,7 +160,7 @@ public class App extends Application {
             if (entry != null) {
 
                 if (!(entry instanceof KeyStore.PrivateKeyEntry)) {
-                    Log.e(TAG, "Not an instance of a PrivateKeyEntry");
+                    Timber.e("Not an instance of a PrivateKeyEntry");
                     return null;
                 }
 
@@ -161,7 +177,7 @@ public class App extends Application {
 //        } catch (IOException e) {
 //        } catch (UnrecoverableEntryException e) {
         } catch (Throwable throwable) {
-            Log.e(TAG, "unable to get KeyPair from KeyStore", throwable);
+            Timber.e("unable to get KeyPair from KeyStore", throwable);
         }
 
         return makeKeyPair(KEYPAIR_ALIAS);
@@ -197,7 +213,7 @@ public class App extends Application {
 //        } catch (NoSuchAlgorithmException e) {
 //        } catch (NoSuchProviderException e) {
         } catch (Throwable throwable) {
-            Log.e(TAG, "unable to create KeyPair", throwable);
+            Timber.e("unable to create KeyPair", throwable);
         }
 
         return keyPair;
@@ -214,7 +230,7 @@ public class App extends Application {
 //        } catch (NoSuchAlgorithmException e) {
 //        } catch (IOException e) {
         } catch (Throwable throwable) {
-            Log.e(TAG, "unable to delete KeyPair", throwable);
+            Timber.e("unable to delete KeyPair", throwable);
         }
     }
 

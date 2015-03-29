@@ -2,20 +2,16 @@
 
 buildscript {
     repositories {
-        maven { url 'http://sf1-8yoohoo-ixb-mb.wellsfargo.com:9090/archiva/repository/internal/' }
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.0.0'
+        classpath 'com.android.tools.build:gradle:1.1.0'
     }
 }
 
 allprojects {
     repositories {
-        maven { url 'http://sf1-8yoohoo-ixb-mb.wellsfargo.com:9090/archiva/repository/internal/' }
         mavenCentral()
-        maven {
-            url "https://raw.github.com/embarkmobile/zxing-android-minimal/mvn-repo/maven-repository/"
-        }
+        maven { url "https://raw.github.com/embarkmobile/zxing-android-minimal/mvn-repo/maven-repository/" }
     }
 }

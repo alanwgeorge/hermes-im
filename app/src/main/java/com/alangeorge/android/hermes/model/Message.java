@@ -3,7 +3,6 @@ package com.alangeorge.android.hermes.model;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Base64;
-import android.util.Log;
 
 import com.alangeorge.android.hermes.App;
 import com.alangeorge.android.hermes.model.dao.DBHelper;
@@ -25,10 +24,10 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
+import timber.log.Timber;
+
 @SuppressWarnings("UnusedDeclaration")
 public class Message {
-    private static final String TAG = "Message";
-
     private Gson gson;
 
     @Expose
@@ -150,14 +149,14 @@ public class Message {
 
     public void sign(PrivateKey senderPrivateKey) {
         if (body == null) {
-            Log.e(TAG, "message body null, not signing");
+            Timber.e( "message body null, not signing");
             return;
         }
 
         try {
             Signature secretKeySigner = Signature.getInstance(App.DEFAULT_SIGNATURE_ALGORITHM, App.DEFAULT_RSA_SECURITY_PROVIDER);
             secretKeySigner.initSign(senderPrivateKey);
-            secretKeySigner.update(body.getGcmRegistrationId().getBytes());
+            secretKeySigner.update(body.getSenderGcmRegistrationId().getBytes());
             secretKeySigner.update(body.getSenderPublicKey().getBytes());
             secretKeySigner.update(body.getReceiverEncodedSymKey().getBytes());
             secretKeySigner.update(body.getMessage().getBytes());
@@ -168,25 +167,25 @@ public class Message {
 //                } catch (InvalidKeyException e) {
 //                } catch (SignatureException e) {
         } catch (Exception e) {
-            Log.e(TAG, "SHA512 signing error", e);
+            Timber.e( "SHA512 signing error", e);
         }
     }
 
     public boolean verifySignature() {
         if (body == null) {
-            Log.e(TAG, "invalid message, message body is null");
+            Timber.e( "invalid message, message body is null");
             return false;
         }
 
         if (body.getSenderPublicKey() == null || "".equals(body.getSenderPublicKey())) {
-            Log.e(TAG, "sender public key is null or empty");
+            Timber.e( "sender public key is null or empty");
             return false;
         }
 
         try {
             Signature secretKeyVerifier = Signature.getInstance(App.DEFAULT_SIGNATURE_ALGORITHM, App.DEFAULT_RSA_SECURITY_PROVIDER);
             secretKeyVerifier.initVerify(Contact.decodePublicKey(body.getSenderPublicKey()));
-            secretKeyVerifier.update(body.getGcmRegistrationId().getBytes());
+            secretKeyVerifier.update(body.getSenderGcmRegistrationId().getBytes());
             secretKeyVerifier.update(body.getSenderPublicKey().getBytes());
             secretKeyVerifier.update(body.getReceiverEncodedSymKey().getBytes());
             secretKeyVerifier.update(body.getMessage().getBytes());
@@ -196,7 +195,7 @@ public class Message {
 //                } catch (InvalidKeyException e) {
 //                } catch (SignatureException e) {
         } catch (Exception e) {
-            Log.e(TAG, "SHA512 signing error", e);
+            Timber.e( "SHA512 signing error", e);
         }
 
         return false;
@@ -317,7 +316,7 @@ public class Message {
 
     public static Message cursorToMessage(Cursor cursor) throws ModelException {
         if (cursor == null || cursor.getCount() == 0) {
-            Log.e(TAG, "cursor null or empty");
+            Timber.e("cursor null or empty");
             return null;
         }
 
@@ -333,7 +332,7 @@ public class Message {
 
     public static class Body {
         @Expose
-        private String gcmRegistrationId;
+        private String senderGcmRegistrationId;
         @Expose
         private String senderPublicKey;
         @Expose
@@ -341,12 +340,12 @@ public class Message {
         @Expose
         private String message;
 
-        public String getGcmRegistrationId() {
-            return gcmRegistrationId;
+        public String getSenderGcmRegistrationId() {
+            return senderGcmRegistrationId;
         }
 
-        public void setGcmRegistrationId(String gcmRegistrationId) {
-            this.gcmRegistrationId = gcmRegistrationId;
+        public void setSenderGcmRegistrationId(String senderGcmRegistrationId) {
+            this.senderGcmRegistrationId = senderGcmRegistrationId;
         }
 
         public String getSenderPublicKey() {
@@ -376,7 +375,7 @@ public class Message {
         @Override
         public String toString() {
             return "Body{" +
-                    "gcmRegistrationId='" + gcmRegistrationId + '\'' +
+                    "senderGcmRegistrationId='" + senderGcmRegistrationId + '\'' +
                     ", senderPublicKey='" + senderPublicKey + '\'' +
                     ", receiverEncodedSymKey='" + receiverEncodedSymKey + '\'' +
                     ", message='" + message + '\'' +
