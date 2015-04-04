@@ -1,7 +1,6 @@
 # hermes-im
 ![logo](app/src/main/res/drawable-xhdpi/ic_launcher.png?raw=true  "Logo")
 
-
 Secure messaging app for Android.  Uses Google Cloud Messaging (GCM) as device to device transport (no backend required, other than GCM, of course).
 
 Work in progress, currently can register new contacts with QR code scan and can send and receive messages. Need to add to conversation and contact management.  See other TODOs below. 
